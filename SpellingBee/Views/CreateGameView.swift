@@ -35,9 +35,9 @@ struct CreateGameView: View {
     
     private func createGame() {
         if let currentUser = gameManager.currentUser {
-            var participantsIDs = selectedUsers.map { $0.id }
-            participantsIDs.append(currentUser.id)
-            gameManager.createGame(creatorID: currentUser.id, participantsIDs: Set(participantsIDs))
+            var participants = selectedUsers.map { $0 }
+            participants.append(currentUser)
+            gameManager.createGame(creator: currentUser, participants: Set(participants))
             showCreateGameView = false
         }
     }

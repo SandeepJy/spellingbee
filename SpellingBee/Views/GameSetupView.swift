@@ -27,14 +27,12 @@ struct GameSetupView: View {
                 
                 // Participants
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Participants \(game.participantsIDs.count))")
+                    Text("Participants \(game.participants.count))")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    ForEach(Array(game.participantsIDs), id: \.self) { participantID in
-                        if let participant = gameManager.getUser(by: participantID) {
-                            ParticipantRow(participant: participant, game: game)
-                        }
+                    ForEach(Array(game.participants), id: \.self) { participant in
+                       ParticipantRow(participant: participant, game: game)
                     }
                 }
                 .padding()
@@ -101,7 +99,7 @@ struct GameSetupView: View {
                     }
                 }
                 
-                if game.creatorID == gameManager.currentUser?.id && !game.isStarted {
+                if game.creator == gameManager.currentUser && !game.isStarted {
                     Button(action: { gameManager.startGame(gameID: game.id) }) {
                         Text("Start Game")
                             .font(.headline)

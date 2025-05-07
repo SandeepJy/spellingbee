@@ -58,7 +58,7 @@ struct MainView: View {
                     
                     // Games Display
                     VStack(spacing: 15) {
-                        ForEach(gameManager.games.filter { $0.creatorID == gameManager.currentUser?.id || $0.participantsIDs.contains(where: { $0 == gameManager.currentUser?.id }) }) { game in
+                        ForEach(gameManager.games.filter { $0.creator == gameManager.currentUser || $0.participants.contains(where: { $0 == gameManager.currentUser }) }) { game in
                             GameCardView(game: game)
                                 .environmentObject(gameManager)
                         }
@@ -102,7 +102,7 @@ struct GameCardView: View {
                 HStack {
                     Image(systemName: "person.2.fill")
                         .foregroundColor(.gray)
-                    Text("\(game.participantsIDs.count) Players")
+                    Text("\(game.participants.count) Players")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
@@ -119,10 +119,8 @@ struct GameCardView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    ForEach(Array(game.participantsIDs), id: \.self) { participantID in
-                        if let participant = gameManager.getUser(by: participantID) {
-                            WordProgressRow(participant: participant, game: game)
-                        }
+                    ForEach(Array(game.participants), id: \.self) { participant in
+                        WordProgressRow(participant: participant, game: game)
                     }
                 }
             }
@@ -186,7 +184,7 @@ struct WordProgressRow: View {
     }
     
     private var wordCount: Int {
-        game.words.filter { $0.createdByID == participant.id }.count
+        game.words.filter { $0.createdBy.id == participant.id }.count
     }
 }
 
@@ -204,7 +202,7 @@ struct GameSection: View {
             ScrollView {
                 ForEach(games) { game in
                     NavigationLink(destination: GameDetailsView(gameManager: gameManager, game: game)) {
-                        Text("Game - Created by \(gameManager.getUser(by: game.creatorID)?.username) \(timeAgoSince(date: game.creationDate)) ago")
+                        Text("Game - Created by \(game.creator.username) \(timeAgoSince(date: game.creationDate)) ago")
                             .foregroundColor(.blue)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -267,7 +265,7 @@ struct ParticipantRow: View {
     }
     
     private var wordCount: Int {
-        game.words.filter { $0.createdByID == participant?.id }.count
+        game.words.filter { $0.createdBy == participant }.count
     }
 }
 

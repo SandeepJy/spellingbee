@@ -49,13 +49,13 @@ struct GameDetailsView: View {
             if let url = recording.url, recording.isLocal {
                 dispatchGroup.enter()
                 gameManager.uploadAudio(gameID: game.id, url: url, word: recording.word) { uploadedUrl in
-                    if let uploadedUrl = uploadedUrl {
+                    if let uploadedUrl = uploadedUrl, let currentUser = self.gameManager.currentUser {
                         let newWord = Word(
                             word: recording.word,
                             soundURL: URL(string: uploadedUrl),
                             level: 1,
-                            createdByID: self.gameManager.currentUser!.id,
-                            gameID: self.game.id
+                            createdBy: currentUser,
+                            game: self.game
                         )
                         words.append(newWord)
                     }
@@ -77,7 +77,7 @@ struct GameDetailsView: View {
         recordings = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
         
         // Load words from game
-        let userWords = game.words.filter { $0.createdByID == currentUser.id }
+        let userWords = game.words.filter { $0.createdBy == currentUser }
         for (index, word) in userWords.enumerated() where index < 5 {
             recordings[index] = RecordingDetails(
                 word: word.word,

@@ -87,8 +87,8 @@ class GameManager: ObservableObject {
      * @param creator The user who creates the game
      * @param participants Set of users participating in the game
      */
-    func createGame(creatorID: String, participantsIDs: Set<String>) {
-        let newGame = MultiUserGame(id: UUID(), creatorID: creatorID, participantsIDs: participantsIDs, words: [], creationDate: Date())
+    func createGame(creator: SpellGameUser, participants: Set<SpellGameUser>) {
+        let newGame = MultiUserGame(id: UUID(), creator: creator, participants: participants, words: [], creationDate: Date())
         games.append(newGame)
         saveGames()
     }
@@ -195,11 +195,11 @@ class GameManager: ObservableObject {
     
     //gets username for all participants
     func getParticipantNames(for game: MultiUserGame) -> [String] {
-        return game.participantsIDs.compactMap { getUser(by: $0)?.username }
+        return game.participants.compactMap { $0.username }
     }
     
     //gets the username of the creator
     func getCreatorName(for game: MultiUserGame) -> String? {
-        return getUser(by: game.creatorID)?.username
+        return game.creator.username
     }
 }

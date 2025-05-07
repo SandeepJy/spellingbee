@@ -8,8 +8,8 @@ struct Word: Identifiable, Codable, Hashable {
     let word: String  // The actual word
     let soundURL: URL?  // Optional URL to audio pronunciation
     let level: Int  // Difficulty level of the word
-    var createdByID: String  // User ID who added this word
-    var gameID: UUID? //The game that this word belongs to
+    var createdBy: SpellGameUser  // User ID who added this word
+    var game: MultiUserGame? //The game that this word belongs to
     
     // Equatable protocol implementation
     static func == (lhs: Word, rhs: Word) -> Bool {

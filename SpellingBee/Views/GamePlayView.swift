@@ -15,7 +15,7 @@ struct GamePlayView: View {
     private let voiceVm = VoiceViewModel()
     
     private var wordsToSpell: [Word] {
-        game.words.filter { $0.createdByID != gameManager.currentUser?.id }
+        game.words.filter { $0.createdBy != gameManager.currentUser }
     }
     
     private var currentWord: Word? {
