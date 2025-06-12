@@ -23,4 +23,4 @@ jobs:
       - name: Run Danger
         run: npm run danger
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GEN_TOKEN }}
