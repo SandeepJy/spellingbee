@@ -81,7 +81,7 @@ struct MainView: View {
     }
 }
 
-// Game Card View
+
 struct GameCardView: View {
     @EnvironmentObject var gameManager: GameManager
     let game: MultiUserGame
