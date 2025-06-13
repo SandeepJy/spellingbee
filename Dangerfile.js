@@ -1,4 +1,4 @@
-const fs = require('fs');
+const { fs } = require('fs');
 const path = require('path');
 const { danger, warn, fail, message } = require('danger');
 const minimatch = require('minimatch');
