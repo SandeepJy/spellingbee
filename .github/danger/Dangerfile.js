@@ -1,7 +1,7 @@
 import { danger, fail, warn, message } from 'danger';
-import fs from 'fs';
+import { fs } from 'fs';
 import path from 'path';
-import minimatch from 'minimatch';
+import { minimatch } from 'minimatch';
 
 // Load rules configuration
 const rulesPath = path.join(__dirname, 'rules.json');
