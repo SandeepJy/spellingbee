@@ -1,10 +1,9 @@
+
 {
     "name": "danger-rules",
     "version": "1.0.0",
-    "scripts": {
-      "danger": "danger ci"
-    },
-    "devDependencies": {
+    "type": "module",
+    "dependencies": {
       "danger": "^11.0.0",
       "minimatch": "^9.0.0"
     }

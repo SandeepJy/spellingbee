@@ -1,4 +1,32 @@
+# name: Danger CI
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+
+# jobs:
+#   danger:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+
+#       - name: Install dependencies
+#         run: npm install
+
+#       - name: Run Danger
+#         run: npm run danger
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GEN_TOKEN }}
+
 name: Danger CI
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -6,21 +34,29 @@ on:
 jobs:
   danger:
     runs-on: ubuntu-latest
+    name: Danger CI
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Danger
-        run: npm run danger
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: '.github/danger/package.json'
+    
+    - name: Install dependencies
+      run: |
+        cd .github/danger
+        npm install
+    
+    - name: Run Danger
+      run: |
+        cd .github/danger
+        npx danger ci
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
