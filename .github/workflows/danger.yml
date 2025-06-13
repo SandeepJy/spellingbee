@@ -47,7 +47,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: '.github/danger/package.json'
+        #cache-dependency-path: '.github/danger/package.json'
     
     - name: Install dependencies
       run: |
