@@ -6,8 +6,8 @@
       "danger": "danger ci"
     },
     "dependencies": {
-      "danger": "^13.0.0",  
-      "minimatch": "^5.1.0" 
+      "danger": "^11.2.0",  // Core Danger JS library
+      "minimatch": "^5.1.0"  // For glob pattern matching in rules
     },
     "devDependencies": {},
     "engines": {
