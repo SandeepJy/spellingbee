@@ -1,9 +1,9 @@
 import fs from "fs"
-import * as _ from "minimatch"
+import minimatch from "minimatch"
 import { danger, fail, warn, message } from "danger"
 
 // Load rules from JSON file
-const rules = JSON.parse(fs.readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
+const rules = JSON.parse(fs.readFileSync('danger-rules.json', 'utf8')).rules;
 
 // Process each rule
 rules.forEach(rule => {
