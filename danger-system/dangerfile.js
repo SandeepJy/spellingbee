@@ -51,7 +51,7 @@ const minimatch = require('minimatch');
 
 
 // Load rules from JSON file
-const rules = JSON.parse(fs.readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
+const rules = JSON.parse(fs.readFileSync('danger-rules.json', 'utf8')).rules;
 
 // Process each rule
 rules.forEach(rule => {
