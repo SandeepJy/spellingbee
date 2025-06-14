@@ -1,9 +1,9 @@
-import fs from "fs"
-import minimatch from "minimatch"
-import { danger, fail, warn, message } from "danger"
+const { readFileSync, statSync } = require('fs');
+const minimatch = require('minimatch');
+const { danger, fail, warn, message } = require('danger');
 
 // Load rules from JSON file
-const rules = JSON.parse(fs.readFileSync('danger-rules.json', 'utf8')).rules;
+const rules = JSON.parse(readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
 
 // Process each rule
 rules.forEach(rule => {
@@ -39,4 +39,3 @@ function handleViolation(severity, msg) {
         message(msg);  // Posts an info message in PR
     }
 }
-
