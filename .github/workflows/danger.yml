@@ -1,26 +1,19 @@
-name: Danger CI
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+name: Danger checks 🚧
+
+on: [pull_request]
 
 jobs:
-  danger:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@master
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@master
         with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Danger
-        run: npm run danger
+          node-version: 12.x
+      - name: yarn install
+        run: yarn install
+      - name: Danger
+        run: cd danger-system && yarn danger
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
