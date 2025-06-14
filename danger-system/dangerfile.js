@@ -45,9 +45,10 @@
 
 
 'use strict';
+const { danger, fail, warn, message } = require('danger');
 const fs = require('fs');
 const minimatch = require('minimatch');
-const { danger, fail, warn, message } = require('danger');
+
 
 // Load rules from JSON file
 const rules = JSON.parse(fs.readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
