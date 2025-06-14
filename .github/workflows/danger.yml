@@ -1,4 +1,6 @@
+# .github/workflows/danger.yml
 name: Danger CI
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -6,21 +8,17 @@ on:
 jobs:
   danger:
     runs-on: ubuntu-latest
+    name: Danger CI
+    # ... existing code ...
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3  # Added: Checks out the repo to access files
+      - name: Set up Node.js  # Added: Installs Node.js for Danger JS
+        uses: actions/setup-node@v3
         with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Danger
-        run: npm run danger
+          node-version: 16  # Use a stable version (adjust as needed)
+      - name: Install dependencies  # Added: Installs from package.json
+        run: cd danger-system && npm install
+      - name: Run Danger  # Modified/Added: Executes Danger with the dangerfile
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for Danger to post comments
+        run: cd danger-system && npx danger ci --dangerfile dangerfile.js
