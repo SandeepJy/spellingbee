@@ -1,9 +1,11 @@
-const { readFileSync, statSync } = require('fs');
-const minimatch = require('minimatch');
+'use strict';
+
 const { danger, fail, warn, message } = require('danger');
+const { readFileSync } = require('fs');
+const minimatch = require('minimatch');
 
 // Load rules from JSON file
-const rules = JSON.parse(readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
+const rules = JSON.parse(readFileSync('danger-rules.json', 'utf8')).rules;
 
 // Process each rule
 rules.forEach(rule => {
