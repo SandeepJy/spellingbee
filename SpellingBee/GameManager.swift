@@ -13,6 +13,7 @@ class GameManager: ObservableObject {
     @Published var games: [MultiUserGame] = []  // List of all games
     private var db = Firestore.firestore()
     private var storage = Storage.storage()
+    private var test: Bool?
     
     init() {
         loadUsers()
@@ -66,6 +67,7 @@ class GameManager: ObservableObject {
             addUser(id: user.id, username: user.username, email: user.email)
         }
         currentUser = users.first(where: { $0.id == user.id })
+        test = self.test!
     }
     
    /**
