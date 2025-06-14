@@ -24,8 +24,9 @@ rules.forEach(rule => {
             .filter(file => minimatch(file, condition.fileGlob))
             .forEach(async file => {
                 const diff = await danger.git.diffForFile(file);
+                console.log(diff.added)
                 if (diff && diff.added && diff.added.split('\n').some(line => regex.test(line))) {
-                    handleViolation(severity, `${ruleMessage} Detected in ${file}`);
+                    handleViolation(severity, `${ruleMessage} Detected in ${file} \n ${line}`);
                 }
             });
     }
