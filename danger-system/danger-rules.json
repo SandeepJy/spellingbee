@@ -5,7 +5,7 @@
         "severity": "error",
         "condition": {
           "type": "file-modified",
-          "glob": "**/*.entitlements"  // Matches any .entitlements file in any folder
+          "glob": "**/*.entitlements"  
         },
         "message": "Changes to .entitlements files are not allowed without approval. This could affect app permissions."
       },
@@ -14,8 +14,8 @@
         "severity": "error",
         "condition": {
           "type": "diff-pattern",
-          "fileGlob": "**/*.swift",  // Only check Swift files
-          "regex": "(!\\s*\\w+|\\w+\\s*\\!)"  // Detects forced unwrapping (e.g., 'value!' or '!value')
+          "fileGlob": "**/*.swift",  
+          "regex": "(!\\s*\\w+|\\w+\\s*\\!)"  
         },
         "message": "Forced unwrapping ('!') detected in changes. Consider safer optional handling to avoid crashes."
       },
@@ -24,7 +24,7 @@
         "severity": "info",
         "condition": {
           "type": "file-modified",
-          "glob": "**/*.swift"  // Matches any Swift file
+          "glob": "**/*.swift"  
         },
         "message": "Swift files were modified. Remember to run unit tests!"
       }

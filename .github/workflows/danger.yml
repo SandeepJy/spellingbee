@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: 12.x
       - name: yarn install
-        run: yarn install
+        run: cd danger-system && yarn install
       - name: Danger
         run: cd danger-system && yarn danger
         env:
