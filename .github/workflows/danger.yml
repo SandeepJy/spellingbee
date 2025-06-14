@@ -19,5 +19,5 @@ jobs:
         run: cd danger-system  && npm install
       - name: Run Danger # Modified/Added: Executes Danger with the dangerfile
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for Danger to post comments
+          GITHUB_TOKEN: ${{ secrets.GEN_SECRET }} # Required for Danger to post comments
         run: cd danger-system && npx danger ci
