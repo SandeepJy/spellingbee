@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 16 # Use a stable version (adjust as needed)
       - name: Install dependencies # Added: Installs from package.json
-        run: cd danger-system && npm install
+        run: cd danger-system && npm --install global typescript && npm install
       - name: Run Danger # Modified/Added: Executes Danger with the dangerfile
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for Danger to post comments
