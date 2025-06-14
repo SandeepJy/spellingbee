@@ -14,6 +14,6 @@ jobs:
       - name: yarn install
         run: yarn install
       - name: Danger
-        run: yarn danger ci
+        run: cd danger-system && yarn danger ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
