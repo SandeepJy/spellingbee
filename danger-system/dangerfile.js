@@ -44,7 +44,6 @@
 // }
 
 
-'use strict';
 const { danger, fail, warn, message } = require('danger');
 const fs = require('fs');
 const minimatch = require('minimatch');
