@@ -1,6 +1,6 @@
-const fs = require('fs');
-const minimatch = require('minimatch');
-const { danger, fail, warn, message } = require('danger');
+import fs from "fs"
+import * as _ from "minimatch"
+import { danger, fail, warn, message } from "danger"
 
 // Load rules from JSON file
 const rules = JSON.parse(fs.readFileSync('./danger-system/danger-rules.json', 'utf8')).rules;
