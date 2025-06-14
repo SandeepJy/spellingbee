@@ -68,7 +68,7 @@ class GameManager: ObservableObject {
         }
         currentUser = users.first(where: { $0.id == user.id })
         test = self.test ?? true
-        let fake = "Thisi is a fake"
+        let fake = "Thisi is a fake!"
     }
     
    /**
