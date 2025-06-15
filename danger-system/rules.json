@@ -4,7 +4,7 @@
         "id": "entitlements-modification",
         "name": "Entitlements File Modified",
         "description": "Entitlements files should be reviewed carefully as they affect app permissions",
-        "severity": "warning",
+        "severity": "error",
         "type": "file_pattern",
         "patterns": [
           "**/*.entitlements"
