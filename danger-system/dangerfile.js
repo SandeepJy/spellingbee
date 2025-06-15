@@ -199,10 +199,9 @@ class DangerRuleEngine {
     }
 
     isFileExcluded(file) {
-        // return this.settings.exclude_files.some(pattern =>
-        //     minimatch(file, pattern)
-        // );
-        return false;
+        return this.settings.exclude_files.some(pattern =>
+            minimatch(file, pattern)
+        );
     }
 
     async getDiffContent() {
@@ -306,6 +305,9 @@ class DangerRuleEngine {
 // Execute the danger rules
 async function main() {
     const ruleEngine = new DangerRuleEngine(rulesConfig);
+    const files = ['app.js', 'style.css', 'index.html', 'lib.js'];
+    const jsFiles = files.filter((file) => minimatch(file, '*.js'));
+    console.log(jsFiles); // ["app.js", "lib.js"]
     await ruleEngine.executeRules();
 }
 
