@@ -45,7 +45,7 @@ const minimatch = require('minimatch');
 
 // const { danger, fail, warn, message, markdown } = require('danger');
 // const fs = require('fs');
-const path = require('path');
+//const path = require('path');
 //const minimatch = require('minimatch');
 
 // Load rules configuration
