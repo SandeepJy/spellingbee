@@ -44,9 +44,9 @@
 
 
 const { danger, fail, warn, message, markdown } = require('danger');
-const minimatch = require('minimatch');
 const fs = require('fs');
 const path = require('path');
+const minimatch = require('minimatch');
 
 // Load rules configuration
 const rulesConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'rules.json'), 'utf8'));
