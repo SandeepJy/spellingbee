@@ -1,7 +1,7 @@
 
-// const { danger, fail, warn, message } = require('danger');
-// const fs = require('fs');
-// const minimatch = require('minimatch');
+const { danger, fail, warn, message } = require('danger');
+const fs = require('fs');
+const minimatch = require('minimatch');
 
 
 // // Load rules from JSON file
@@ -43,10 +43,10 @@
 // }
 
 
-const { danger, fail, warn, message, markdown } = require('danger');
-const fs = require('fs');
+// const { danger, fail, warn, message, markdown } = require('danger');
+// const fs = require('fs');
 const path = require('path');
-const minimatch = require('minimatch');
+//const minimatch = require('minimatch');
 
 // Load rules configuration
 const rulesConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'rules.json'), 'utf8'));
