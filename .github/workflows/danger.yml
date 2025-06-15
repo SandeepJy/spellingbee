@@ -45,6 +45,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: NPM Install
+        run: |
+          cd danger-system
+          npm install
+
       - name: Install dependencies
         run: |
           cd danger-system
