@@ -1,0 +1,16 @@
+{
+    "name": "danger-system",
+    "version": "1.0.0",
+    "description": "Danger JS setup for repo automation",
+    "scripts": {
+      "danger": "danger ci"
+    },
+    "dependencies": {
+      "danger": "^11.2.0",  
+      "minimatch": "^5.1.0"  
+    },
+    "devDependencies": {},
+    "engines": {
+      "node": ">=14"
+    }
+  }

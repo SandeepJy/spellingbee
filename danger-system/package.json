@@ -1,16 +1,17 @@
 {
-    "name": "danger-system",
-    "version": "1.0.0",
-    "description": "Danger JS setup for repo automation",
-    "scripts": {
-      "danger": "danger ci"
-    },
-    "dependencies": {
-      "danger": "^11.2.0",  
-      "minimatch": "^5.1.0"  
-    },
-    "devDependencies": {},
-    "engines": {
-      "node": ">=14"
-    }
+  "name": "danger-system",
+  "version": "1.0.0",
+  "description": "JSON-driven Danger system for iOS project",
+  "main": "dangerfile.js",
+  "scripts": {
+    "danger": "danger ci",
+    "danger-local": "danger pr"
+  },
+  "dependencies": {
+    "danger": "^11.3.1",
+    "minimatch": "^9.0.3"
+  },
+  "engines": {
+    "node": ">=16"
   }
+}
