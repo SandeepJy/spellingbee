@@ -264,9 +264,9 @@ class DangerRuleEngine {
 // Execute the danger rules
 async function main() {
     const ruleEngine = new DangerRuleEngine(rulesConfig);
-    const files = ['app.js', 'style.css', 'index.html', 'lib.js'];
-    const jsFiles = files.filter((file) => minimatch(file, '*.js'));
-    console.log(jsFiles); // ["app.js", "lib.js"]
+    // const files = ['app.js', 'style.css', 'index.html', 'lib.js'];
+    // const jsFiles = files.filter((file) => minimatch(file, '*.js'));
+    // console.log(jsFiles); // ["app.js", "lib.js"]
     await ruleEngine.executeRules();
 }
 
