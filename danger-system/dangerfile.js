@@ -199,9 +199,10 @@ class DangerRuleEngine {
     }
 
     isFileExcluded(file) {
-        return this.settings.exclude_files.some(pattern =>
-            console.log(pattern);
-        minimatch(file, pattern));
+        // return this.settings.exclude_files.some(pattern =>
+        //     minimatch(file, pattern)
+        // );
+        return false;
     }
 
     async getDiffContent() {
