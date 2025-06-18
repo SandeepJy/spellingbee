@@ -54,11 +54,15 @@ jobs:
           cache: gradle
 
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+        run: |
+          cd danger-java
+          chmod +x ./gradlew
 
       - name: Run Danger Java
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: ./gradlew runDanger --args="ci,./rules.json,."
+        run: |
+          cd danger-java
+          ./gradlew runDanger --args="ci,./rules.json,."
