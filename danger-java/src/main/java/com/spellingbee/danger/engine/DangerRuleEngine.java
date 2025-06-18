@@ -167,8 +167,6 @@ public class DangerRuleEngine {
 
     private boolean fileMatchesPatterns(String file, List<String> patterns) {
 
-        System.out.println("Looking for file " + file + " that matches pattern " + patterns.toString());
-
         if (patterns == null || patterns.isEmpty()) {
             return true; // No patterns means match all
         }

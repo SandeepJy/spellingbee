@@ -59,15 +59,12 @@ public class GitHubFacade {
     }
 
     public void setStatus(boolean success) throws IOException {
-        // String context = "Danger Java";
-        // String description = success ? "All checks passed!" : "Rules violations
-        // found";
-        // GHCommitState state = success ? GHCommitState.SUCCESS :
-        // GHCommitState.FAILURE;
+        String context = "Danger Java";
+        String description = success ? "All checks passed!" : "Rules violations found";
+        GHCommitState state = success ? GHCommitState.SUCCESS : GHCommitState.FAILURE;
 
-        // pullRequest.getHead().getRef().getRepository()
-        // .createCommitStatus(pullRequest.getHead().getSha(), state, null, description,
-        // context);
+        repository.createCommitStatus(pullRequest.getHead().getSha(), state, null, description,
+                context);
     }
 
     public String getPRTargetBranch() throws IOException {

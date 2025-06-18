@@ -7,11 +7,9 @@ import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,8 +29,6 @@ public class GitFacade {
     public GitFacade(String repoPath) throws IOException {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         Path gitDir = Paths.get(repoPath, ".git");
-
-        System.out.println("sandeep " + gitDir.toFile());
 
         this.repository = builder
                 .setGitDir(gitDir.toFile())
