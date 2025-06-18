@@ -5,7 +5,7 @@
 # Default values
 MODE="local"
 RULES_PATH="./rules.json"
-REPO_PATH="."
+REPO_PATH="../"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

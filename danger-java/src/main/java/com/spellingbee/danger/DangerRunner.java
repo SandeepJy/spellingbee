@@ -14,33 +14,33 @@ import java.nio.file.Paths;
  * Main entry point for the Danger Java system
  */
 public class DangerRunner {
-    
+
     public static void main(String[] args) {
         try {
             String mode = args.length > 0 ? args[0] : "local";
             String rulesPath = args.length > 1 ? args[1] : "./rules.json";
-            String repoPath = args.length > 2 ? args[2] : ".";
-            
+            String repoPath = args.length > 2 ? args[2] : "..";
+
             System.out.println("Starting Danger Java in " + mode + " mode");
             System.out.println("Using rules from: " + rulesPath);
             System.out.println("Repository path: " + repoPath);
-            
+
             // Load rules configuration
             RulesConfig rulesConfig = loadRulesConfig(rulesPath);
-            
+
             // Initialize Git facade
             GitFacade gitFacade = new GitFacade(repoPath);
-            
+
             // Initialize GitHub facade for CI mode
             GitHubFacade gitHubFacade = null;
             if ("ci".equals(mode)) {
                 gitHubFacade = new GitHubFacade();
             }
-            
+
             // Create and run the rule engine
             DangerRuleEngine ruleEngine = new DangerRuleEngine(rulesConfig, gitFacade, gitHubFacade);
             boolean success = ruleEngine.executeRules();
-            
+
             // Exit with appropriate code
             if (!success && "ci".equals(mode)) {
                 System.exit(1);
@@ -51,7 +51,7 @@ public class DangerRunner {
             System.exit(1);
         }
     }
-    
+
     private static RulesConfig loadRulesConfig(String path) throws Exception {
         try (FileReader reader = new FileReader(path)) {
             Gson gson = new Gson();
