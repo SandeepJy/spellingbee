@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.spellingbee'
+version = '1.0.0'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.5.0.202303070854-r'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.kohsuke:github-api:1.314'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+}
+
+application {
+    mainClass = 'com.spellingbee.danger.DangerRunner'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.spellingbee.danger.DangerRunner'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task runDanger(type: JavaExec) {
+    group = 'application'
+    description = 'Runs the Danger system against the current PR'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.spellingbee.danger.DangerRunner'
+    
+    // Pass CLI arguments to the application
+    if (project.hasProperty('args')) {
+        args project.getProperty('args').split(',')
+    }
+}
