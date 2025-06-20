@@ -1,0 +1,30 @@
+diff --git a/SpellingBee/GameManager.swift b/SpellingBee/GameManager.swift
+index bda4e74..f6d1281 100644
+--- a/SpellingBee/GameManager.swift
++++ b/SpellingBee/GameManager.swift
+@@ -58,6 +58,7 @@ class GameManager: ObservableObject {
+     }
+ 
+     /**
++     * Modded
+      * Sets the current user and adds them to the users list if not already present
+      *
+      * @param user The user to set as current
+diff --git a/danger-java/.gradle/8.13/executionHistory/executionHistory.bin b/danger-java/.gradle/8.13/executionHistory/executionHistory.bin
+index b0c5c66..b3160cb 100644
+Binary files a/danger-java/.gradle/8.13/executionHistory/executionHistory.bin and b/danger-java/.gradle/8.13/executionHistory/executionHistory.bin differ
+diff --git a/danger-java/.gradle/8.13/executionHistory/executionHistory.lock b/danger-java/.gradle/8.13/executionHistory/executionHistory.lock
+index 9cde6a3..4238cb6 100644
+Binary files a/danger-java/.gradle/8.13/executionHistory/executionHistory.lock and b/danger-java/.gradle/8.13/executionHistory/executionHistory.lock differ
+diff --git a/danger-java/.gradle/8.13/fileHashes/fileHashes.bin b/danger-java/.gradle/8.13/fileHashes/fileHashes.bin
+index ce4782a..b8ac654 100644
+Binary files a/danger-java/.gradle/8.13/fileHashes/fileHashes.bin and b/danger-java/.gradle/8.13/fileHashes/fileHashes.bin differ
+diff --git a/danger-java/.gradle/8.13/fileHashes/fileHashes.lock b/danger-java/.gradle/8.13/fileHashes/fileHashes.lock
+index 5d863ad..fbf502a 100644
+Binary files a/danger-java/.gradle/8.13/fileHashes/fileHashes.lock and b/danger-java/.gradle/8.13/fileHashes/fileHashes.lock differ
+diff --git a/danger-java/.gradle/8.13/fileHashes/resourceHashesCache.bin b/danger-java/.gradle/8.13/fileHashes/resourceHashesCache.bin
+index 1377325..c8f0ccb 100644
+Binary files a/danger-java/.gradle/8.13/fileHashes/resourceHashesCache.bin and b/danger-java/.gradle/8.13/fileHashes/resourceHashesCache.bin differ
+diff --git a/danger-java/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/danger-java/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+index cd3cd0d..3eb40a6 100644
+Binary files a/danger-java/.gradle/buildOutputCleanup/buildOutputCleanup.lock and b/danger-java/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ

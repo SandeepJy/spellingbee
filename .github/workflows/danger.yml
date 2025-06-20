@@ -1,26 +1,68 @@
-name: Danger CI
+# name: Danger CI
+
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+
+# jobs:
+#   danger:
+#     runs-on: ubuntu-latest
+#     name: Danger CI
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "18"
+
+#       - name: NPM Install
+#         run: |
+#           cd danger-system
+#           npm install
+
+#       - name: Run Danger
+#         run: |
+#           cd danger-system
+#           npx danger ci
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           DANGER_GITHUB_API_TOKEN: ${{ secrets.GEN_TOKEN }}
+
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [main, develop]
 
 jobs:
   danger:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Required to get full git history for diff
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Java
+        uses: actions/setup-java@v3
         with:
-          node-version: '18'
+          distribution: "temurin"
+          java-version: "11"
+          cache: gradle
 
-      - name: Install dependencies
-        run: npm install
+      - name: Grant execute permission for gradlew
+        run: |
+          cd danger-java
+          chmod +x ./gradlew
 
-      - name: Run Danger
-        run: npm run danger
+      - name: Run Danger Java
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GEN_TOKEN  }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          cd danger-java
+          ./gradlew runDanger --args="ci"

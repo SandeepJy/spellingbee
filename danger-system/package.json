@@ -1,0 +1,17 @@
+{
+  "name": "danger-system",
+  "version": "1.0.0",
+  "description": "JSON-driven Danger system for iOS project",
+  "main": "dangerfile.js",
+  "scripts": {
+    "danger": "danger ci",
+    "danger-local": "danger pr"
+  },
+  "dependencies": {
+    "danger": "^11.3.1",
+    "minimatch": "^5.1.0"  
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
