@@ -17,7 +17,7 @@ public class DangerRunner {
 
     public static void main(String[] args) {
         try {
-            String mode = args.length > 0 ? args[0] : "local";
+            String mode = args.length > 0 ? args[0] : "ci";
             String rulesPath = args.length > 1 ? args[1] : "./rules.json";
             String repoPath = args.length > 2 ? args[2] : "..";
 
@@ -42,7 +42,7 @@ public class DangerRunner {
             boolean success = ruleEngine.executeRules();
 
             // Exit with appropriate code
-            if (!success && "ci".equals(mode)) {
+            if (!success&& "ci".equals(mode)) {
                 System.out.println("Exiting with status 1");
                 System.exit(1);
             }
