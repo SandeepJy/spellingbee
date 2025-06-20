@@ -49,34 +49,6 @@
       "message": "Print statement found. Consider using proper logging or removing debug prints."
     },
     {
-      "id": "firebase-config-changes",
-      "name": "Firebase Configuration Modified",
-      "description": "Firebase configuration changes need careful review",
-      "severity": "warning",
-      "type": "file_pattern",
-      "patterns": [
-        "**/GoogleService-Info.plist",
-        "**/Firebase/**"
-      ],
-      "message": "Firebase configuration has been modified. Please verify the changes are correct."
-    },
-    {
-      "id": "large-file-addition",
-      "name": "Large File Added",
-      "description": "Large files can bloat the repository",
-      "severity": "info",
-      "type": "file_size",
-      "max_size_kb": 1024,
-      "file_patterns": [
-        "**/*"
-      ],
-      "exclude_patterns": [
-        "**/*.xcassets/**",
-        "**/*.bundle/**"
-      ],
-      "message": "Large file detected. Consider if this file is necessary or if it can be optimized."
-    },
-    {
       "id": "todo-fixme-comments",
       "name": "TODO/FIXME Comments Added",
       "description": "Track technical debt and pending work",

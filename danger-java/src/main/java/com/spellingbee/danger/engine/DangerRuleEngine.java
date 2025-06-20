@@ -270,9 +270,7 @@ public class DangerRuleEngine {
         }
 
         summary.append("\n---\n\n");
-        summary.append("*This check is powered by a Java-based rule system. ");
-        summary.append("Rules can be modified in `rules.json`.*");
-
+        
         return summary.toString();
     }
 }

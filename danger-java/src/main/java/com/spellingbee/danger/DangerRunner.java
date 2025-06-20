@@ -43,6 +43,7 @@ public class DangerRunner {
 
             // Exit with appropriate code
             if (!success && "ci".equals(mode)) {
+                System.out.println("Exiting with status 1");
                 System.exit(1);
             }
         } catch (Exception e) {
