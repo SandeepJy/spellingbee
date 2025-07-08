@@ -348,25 +348,31 @@ check_file_size() {
 
 # Get list of changed files (staged, unstaged, and newly added)
 get_changed_files() {
-    # Staged changes
-    # local staged_changes=$(git diff --name-only --cached)
-    
-    # # Unstaged changes
-    # local unstaged_changes=$(git diff --name-only)
-    
-  
-    # # Combine all changes and sort them uniquely
-    # (echo "$staged_changes"; echo "$unstaged_changes") | sort | uniq
+    # Determine if running in a GitHub CI environment
+    if [ -n "$GITHUB_BASE_REF" ]; then
+        # Fetch the base branch (GitHub CI)
+        git fetch origin $GITHUB_BASE_REF
+        local base_branch="origin/$GITHUB_BASE_REF"
+    else
+        # Assume local development and compare against 'main' branch
+        git fetch origin main
+        local base_branch="origin/main"
+    fi
 
-     # Fetch the base branch
-    git fetch origin $GITHUB_BASE_REF
+    # Get the current branch name
+    local current_branch=$(git rev-parse --abbrev-ref HEAD)
 
-    # Get changes between the current commit (PR head) and the base branch
-    local all_changes=$(git diff --name-only origin/$GITHUB_BASE_REF)
+    # Fetch the base branch to ensure we have the latest changes
+    git fetch origin $base_branch
+
+    # Get changes between the current commit and the base branch
+    local all_changes=$(git diff --name-only $base_branch..$current_branch)
 
     # Print the list of changed files
     echo "$all_changes"
 }
+
+
 
 # Check if file should be excluded
 is_excluded_file() {
