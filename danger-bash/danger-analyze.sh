@@ -495,8 +495,6 @@ print_summary() {
 main() {
     echo "🔍 Starting Danger Analysis..."
 
-    # since we are running from the date-bash directory we should cd to the root
-    cd ..
     
     # Check dependencies
     if ! command -v jq &> /dev/null; then
