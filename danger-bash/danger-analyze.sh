@@ -368,6 +368,8 @@ get_changed_files() {
     # Get changes between the current commit and the base branch
     local all_changes=$(git diff --name-only $base_branch..$current_branch)
 
+    log "INFO" "All Changed $all_changes"
+
     # Print the list of changed files
     echo "$all_changes"
 }
