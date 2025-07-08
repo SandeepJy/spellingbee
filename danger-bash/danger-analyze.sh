@@ -349,7 +349,7 @@ check_file_size() {
 # Get list of changed files (staged, unstaged, and newly added)
 get_changed_files() {
     # Determine if running in a GitHub CI environment
-    if [ -n "$GITHUB_BASE_REF" ]; then
+    if [ -n "${GITHUB_BASE_REF:-}" ]; then
         # Fetch the base branch (GitHub CI)
         git fetch origin $GITHUB_BASE_REF
         local base_branch="origin/$GITHUB_BASE_REF"
