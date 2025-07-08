@@ -22,7 +22,8 @@ VERBOSE="${VERBOSE:-false}"
 # Counters
 errors=0
 warnings=0
-infos=0
+info=0
+results=()
 
 # Initialize results JSON
 init_results() {
@@ -35,7 +36,7 @@ init_results() {
   "results": {
     "errors": [],
     "warnings": [],
-    "info": []
+    "infos": []
   },
   "summary": {
     "error_count": 0,
@@ -56,7 +57,7 @@ log() {
     fi
 }
 
-# Add result to JSON file
+# Add result to results array
 add_result() {
     local severity=$1
     local rule_id=$2
@@ -66,11 +67,31 @@ add_result() {
     local file=$6
     local line_number=${7:-0}
 
+   
     # Escape JSON strings
-    message=$(echo "$message" | jq -Rs .)
-    details=$(echo "$details" | jq -Rs .)
-    file=$(echo "$file" | jq -Rs .)
-    rule_name=$(echo "$rule_name" | jq -Rs .)
+    message=$(echo "$message" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape message: $message"
+        return 1
+    fi
+
+    details=$(echo "$details" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape details: $details"
+        return 1
+    fi
+
+    file=$(echo "$file" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape file: $file"
+        return 1
+    fi
+
+    rule_name=$(echo "$rule_name" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape rule_name: $rule_name"
+        return 1
+    fi
     
     # Create result object
     local result=$(cat <<EOF
@@ -86,20 +107,73 @@ add_result() {
 EOF
 )
 
-    # Update results array in JSON file
-    local temp_file=$(mktemp)
-    local severity_key="${severity}s"  # Convert to plural
-    
-    jq ".results.${severity_key} += [${result}]" "$OUTPUT_FILE" > "$temp_file"
-    mv "$temp_file" "$OUTPUT_FILE"
+    # Append result to results array
+    results+=("$result")
 
     # Update counters
     case $severity in
         error) ((errors++)) ;;
         warning) ((warnings++)) ;;
-        info) ((infos++)) ;;
+        info) ((info++)) ;;
     esac
+
+    log "DEBUG" "Result added successfully"
 }
+
+# Update results in JSON file after processing all rules
+update_results() {
+    local temp_file=$(mktemp)
+
+    # Create initial JSON structure with empty results arrays
+    cat > "$temp_file" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "branch": "$(git rev-parse --abbrev-ref HEAD)",
+  "base_branch": "${BASE_BRANCH}",
+  "commit": "$(git rev-parse HEAD)",
+  "results": {
+    "errors": [],
+    "warnings": [],
+    "infos": []
+  },
+  "summary": {
+    "error_count": $errors,
+    "warning_count": $warnings,
+    "info_count": $info,
+    "passed": false
+  }
+}
+EOF
+
+    # Append results to the appropriate arrays
+    for result in "${results[@]}"; do
+        local severity=$(echo "$result" | jq -r '.severity')
+        local severity_key="${severity}s"
+        
+        jq ".results.${severity_key} += [$result]" "$temp_file" > "$OUTPUT_FILE"
+        if [[ $? -ne 0 ]]; then
+            log "ERROR" "Failed to update results in JSON file: $OUTPUT_FILE"
+            return 1
+        fi
+        
+        mv "$OUTPUT_FILE" "$temp_file"
+    done
+
+    # Update summary
+    jq ".summary.error_count = $errors | 
+        .summary.warning_count = $warnings | 
+        .summary.info_count = $info | 
+        .summary.passed = $(if [[ $errors -eq 0 ]]; then echo "true"; else echo "false"; fi)" "$temp_file" > "$OUTPUT_FILE"
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to update summary in JSON file: $OUTPUT_FILE"
+        return 1
+    fi
+
+    mv "$temp_file" "$OUTPUT_FILE"
+
+    log "DEBUG" "Results and summary updated successfully"
+}
+
 
 # Check file pattern rules
 check_file_pattern() {
@@ -135,12 +209,14 @@ check_code_pattern() {
     local severity=$(echo "$rule_json" | jq -r '.severity')
     local message=$(echo "$rule_json" | jq -r '.message')
     local patterns=$(echo "$rule_json" | jq -r '.patterns[]')
-    local file_patterns=$(echo "$rule_json" | jq -r '.file_patterns[]?' 2>/dev/null || echo "**")
+    local file_patterns=$(echo "$rule_json" | jq -r '.file_patterns[]?' 2>/dev/null || echo "")
     local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_patterns[]?' 2>/dev/null || echo "")
-    
+   
     log "INFO" "Checking code pattern rule: $rule_name"
     
     while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        
         # Check if file matches file_patterns
         local should_check=false
         
@@ -159,48 +235,71 @@ check_code_pattern() {
             continue
         fi
         
-        # Get only added lines from the diff
-        local added_lines=$(git diff "${BASE_BRANCH}...HEAD" -- "$file" 2>/dev/null | grep '^+' | grep -v '^+++' || true)
+        # Get the full diff with line numbers for both staged and unstaged changes
+        local diff_output_staged=$(git diff --cached -- "$file" 2>/dev/null || true)
+        local diff_output_unstaged=$(git diff -- "$file" 2>/dev/null || true)
         
-        if [[ -z "$added_lines" ]]; then
+        # Combine staged and unstaged diffs
+        local diff_output="$diff_output_staged$diff_output_unstaged"
+        
+        
+        if [[ -z "$diff_output" ]]; then
             continue
         fi
         
-        # Check each pattern against added lines
-        while IFS= read -r pattern; do
-            [[ -z "$pattern" ]] && continue
+        # Parse diff to get added lines with their line numbers
+        local current_line=0
+        local in_hunk=false
+        
+        while IFS= read -r line; do
+
+
+            if [[ "$line" =~ ^@@\ -[0-9]+,[0-9]+\ \+([0-9]+),[0-9]+\ @@ ]]; then
+                # Extract starting line number for new file
+                current_line=${BASH_REMATCH[1]}
+                in_hunk=true
+                continue
+            fi
             
-            # Process each added line
-            local line_num=0
-            while IFS= read -r line; do
-                ((line_num++))
-                # Remove the + prefix
-                line="${line:1}"
-                
-                # Check exclude patterns
-                local excluded=false
-                if [[ -n "$exclude_patterns" ]]; then
-                    while IFS= read -r exclude_pattern; do
-                        [[ -z "$exclude_pattern" ]] && continue
-                        if [[ "$line" == *"$exclude_pattern"* ]]; then
-                            excluded=true
-                            break
-                        fi
-                    done <<< "$exclude_patterns"
+            if [[ "$in_hunk" == "true" ]]; then
+                if [[ "$line" =~ ^[+] ]]; then
+                    # This is an added line
+                    local content="${line:1}"  # Remove the + prefix
+
+                    # Check exclude patterns first
+                    local excluded=false
+                    if [[ -n "$exclude_patterns" ]]; then
+                        while IFS= read -r exclude_pattern; do
+                            [[ -z "$exclude_pattern" ]] && continue
+                            if [[ "$content" == *"$exclude_pattern"* ]]; then
+                                excluded=true
+                                break
+                            fi
+                        done <<< "$exclude_patterns"
+                    fi
+                    
+                    if [[ "$excluded" == "false" ]]; then
+                        # Check each pattern against the content
+                        while IFS= read -r pattern; do
+                            [[ -z "$pattern" ]] && continue
+                            
+                            # Use grep for regex matching
+                            if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+                                log "MATCH" "Pattern '$pattern' found in $file at line $current_line"
+                                local detail="Pattern found in added line: $(echo "$content" | head -c 100)..."
+                                add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "$file" "$current_line"
+                            fi
+                        done <<< "$patterns"
+                    fi
+                    
+                    ((current_line++))
+                elif [[ "$line" =~ ^[^-] ]]; then
+                    # Context line or unchanged line
+                    ((current_line++))
                 fi
-                
-                if [[ "$excluded" == "true" ]]; then
-                    continue
-                fi
-                
-                # Check if line matches pattern (using grep for regex)
-                if echo "$line" | grep -qE "$pattern" 2>/dev/null; then
-                    log "MATCH" "Pattern '$pattern' found in $file at line $line_num"
-                    local detail="Pattern found in added line: $(echo "$line" | head -c 100)..."
-                    add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "$file" "$line_num"
-                fi
-            done <<< "$added_lines"
-        done <<< "$patterns"
+                # Lines starting with - are deletions, don't increment line number
+            fi
+        done <<< "$diff_output"
     done <<< "$changed_files"
 }
 
@@ -247,12 +346,17 @@ check_file_size() {
     done <<< "$changed_files"
 }
 
-# Get list of changed files
+# Get list of changed files (staged, unstaged, and newly added)
 get_changed_files() {
-    # Get files that are modified or added in this branch compared to base
-    git diff --name-only "${BASE_BRANCH}...HEAD" 2>/dev/null || \
-    git diff --name-only HEAD~1 2>/dev/null || \
-    echo ""
+    # Staged changes
+    local staged_changes=$(git diff --name-only --cached)
+    
+    # Unstaged changes
+    local unstaged_changes=$(git diff --name-only)
+    
+  
+    # Combine all changes and sort them uniquely
+    (echo "$staged_changes"; echo "$unstaged_changes") | sort | uniq
 }
 
 # Check if file should be excluded
@@ -275,6 +379,7 @@ is_excluded_file() {
 # Process all rules
 process_rules() {
     local changed_files=$(get_changed_files)
+
     
     if [[ -z "$changed_files" ]]; then
         log "WARN" "No changed files found"
@@ -290,24 +395,35 @@ process_rules() {
             log "INFO" "Excluding file: $file"
         fi
     done <<< "$changed_files"
-    
+
     # Process each rule
     local rules=$(jq -c '.rules[]' "$RULES_FILE" 2>/dev/null)
     
     while IFS= read -r rule; do
+        
         [[ -z "$rule" ]] && continue
         
         local rule_type=$(echo "$rule" | jq -r '.type')
+
         
         case "$rule_type" in
             file_pattern)
                 check_file_pattern "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing file_pattern rule for: $rule"
+                fi
                 ;;
             code_pattern)
                 check_code_pattern "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing code_pattern rule for: $rule"
+                fi
                 ;;
             file_size)
                 check_file_size "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing file_size rule for: $rule"
+                fi
                 ;;
             *)
                 log "WARN" "Unknown rule type: $rule_type"
@@ -315,6 +431,7 @@ process_rules() {
         esac
     done <<< "$rules"
 }
+
 
 # Update summary in results
 update_summary() {
@@ -335,7 +452,7 @@ update_summary() {
     local temp_file=$(mktemp)
     jq ".summary.error_count = $errors | 
         .summary.warning_count = $warnings | 
-        .summary.info_count = $infos | 
+        .summary.info_count = $info | 
         .summary.passed = $passed" "$OUTPUT_FILE" > "$temp_file"
     mv "$temp_file" "$OUTPUT_FILE"
 }
@@ -347,7 +464,7 @@ print_summary() {
     echo "         Danger Analysis Summary         "
     echo "========================================="
     
-    if (( errors == 0 && warnings == 0 && infos == 0 )); then
+    if (( errors == 0 && warnings == 0 && info == 0 )); then
         echo -e "${GREEN}✅ All checks passed!${NC}"
     else
         if (( errors > 0 )); then
@@ -356,8 +473,8 @@ print_summary() {
         if (( warnings > 0 )); then
             echo -e "${YELLOW}⚠️  Warnings: $warnings${NC}"
         fi
-        if (( infos > 0 )); then
-            echo -e "${BLUE}ℹ️  Info: $infos${NC}"
+        if (( info > 0 )); then
+            echo -e "${BLUE}ℹ️  Info: $info${NC}"
         fi
     fi
     
@@ -377,6 +494,9 @@ print_summary() {
 # Main execution
 main() {
     echo "🔍 Starting Danger Analysis..."
+
+    # since we are running from the date-bash directory we should cd to the root
+    cd ..
     
     # Check dependencies
     if ! command -v jq &> /dev/null; then
@@ -401,6 +521,9 @@ main() {
     # Process rules
     process_rules
     
+    # Save results to JSON file
+    update_results
+
     # Update summary
     update_summary
     

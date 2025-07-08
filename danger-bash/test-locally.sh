@@ -108,7 +108,7 @@ if [[ -f "$OUTPUT_FILE" ]]; then
     # Show info
     if [[ "$INFO_COUNT" -gt 0 ]]; then
         echo -e "${BLUE}ℹ️  Information ($INFO_COUNT):${NC}"
-        jq -r '.results.info[] | "  • [\(.rule_name)] \(.file): \(.message)"' "$OUTPUT_FILE"
+        jq -r '.results.infos[] | "  • [\(.rule_name)] \(.file): \(.message)"' "$OUTPUT_FILE"
         echo ""
     fi
     
