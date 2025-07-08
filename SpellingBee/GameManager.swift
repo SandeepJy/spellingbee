@@ -66,11 +66,7 @@ class GameManager: ObservableObject {
             addUser(id: user.id, username: user.username, email: user.email)
         }
         currentUser = users.first(where: { $0.id == user.id })
-<<<<<<< Updated upstream
-=======
-        test = self.test ?? true
-        let fake = "Thisi is a fake! "
->>>>>>> Stashed changes
+        let j = SomeOptionalVar!
     }
     
    /**
