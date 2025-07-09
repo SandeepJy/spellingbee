@@ -272,8 +272,7 @@ check_code_pattern() {
                     # This is an added line
                     local content="${line:1}"  # Remove the + prefix
 
-                    log "INFO" "Sandeep - diff output $content"
-       
+            
 
                     # Check exclude patterns first
                     local excluded=false
@@ -292,20 +291,14 @@ check_code_pattern() {
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
                             
-                            pattern="\b\w+!\b"
+                            local pattern2="\b\w+!\b"
 
                             log "DEBUG" "Content: '$content'"
-                            log "DEBUG" "Pattern: '$pattern'"
+                            log "DEBUG" "Pattern: '$pattern2'"
 
-                            if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+                            if echo "$content" | grep -qE "$pattern2" 2>/dev/null; then
                                 log "DEBUG" "Pattern matched"
-                                # Update counters
-                                case $severity in
-                                    error) let errors++ ;;
-                                    warning) let warnings++ ;;
-                                    info) let info++ ;;
-                                    *) log "ERROR" "Unknown severity: $severity" ;;
-                                esac
+                                
                             else
                                 log "DEBUG" "Pattern not matched"
                             fi
