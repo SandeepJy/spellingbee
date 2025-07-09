@@ -244,10 +244,8 @@ check_code_pattern() {
         local diff_output_unstaged=$(git diff -- "$file" 2>/dev/null || true)
         
         # Combine staged and unstaged diffs
-        local diff_output=$(git diff origin/main -- "$file" 2>/dev/null || true)
+        local diff_output=$(git fetch orign master; git diff origin/main -- "$file" 2>/dev/null || true)
         
-        
-        log "INFO" "Sandeep - diff output $diff_output"
         
         if [[ -z "$diff_output" ]]; then
             continue
@@ -272,8 +270,6 @@ check_code_pattern() {
                     # This is an added line
                     local content="${line:1}"  # Remove the + prefix
 
-            
-
                     # Check exclude patterns first
                     local excluded=false
                     if [[ -n "$exclude_patterns" ]]; then
@@ -291,21 +287,6 @@ check_code_pattern() {
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
                             
-                            local pattern2="\b\w+!\b"
-
-                            log "DEBUG" "Content: '$content'"
-                            log "DEBUG" "Pattern: '$pattern2'"
-
-                            if echo "$content" | grep -qE "$pattern2" 2>/dev/null; then
-                                log "DEBUG" "Pattern matched"
-                                
-                            else
-                                log "DEBUG" "Pattern not matched"
-                            fi
-
-                            log "DEBUG" "Errors: $errors, Warnings: $warnings, Info: $info"
-
-
                             # Use grep for regex matching
                             if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
                                 log "MATCH" "Pattern '$pattern' found in $file at line $current_line"
