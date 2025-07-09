@@ -245,6 +245,7 @@ check_code_pattern() {
         # Combine staged and unstaged diffs
         local diff_output="$diff_output_staged$diff_output_unstaged"
         
+        log "INFO" "Sandeep - diff output $diff_output"
         
         if [[ -z "$diff_output" ]]; then
             continue
