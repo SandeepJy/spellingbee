@@ -293,7 +293,26 @@ check_code_pattern() {
                             [[ -z "$pattern" ]] && continue
                             
                             log "INFO" "Sandeep - checking pattern $pattern in text $content"
-                            
+
+                            log "DEBUG" "Content: '$content'"
+                            log "DEBUG" "Pattern: '$pattern'"
+
+                            if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+                                log "DEBUG" "Pattern matched"
+                                # Update counters
+                                case $severity in
+                                    error) let errors++ ;;
+                                    warning) let warnings++ ;;
+                                    info) let info++ ;;
+                                    *) log "ERROR" "Unknown severity: $severity" ;;
+                                esac
+                            else
+                                log "DEBUG" "Pattern not matched"
+                            fi
+
+                            log "DEBUG" "Errors: $errors, Warnings: $warnings, Info: $info"
+
+
                             # Use grep for regex matching
                             if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
                                 log "MATCH" "Pattern '$pattern' found in $file at line $current_line"
