@@ -29,15 +29,15 @@ jobs:
 
       - name: Make scripts executable
         run: |
-          chmod +x ./danger-bash/danger-analyze.sh
-          chmod +x ./danger-bash/github-pr-comment.sh
+          chmod +x danger-analyze.sh
+          chmod +x github-pr-comment.sh
 
       - name: Run Danger Analysis
         id: danger
         run: |
           # Run analysis
-          ./ddanger-analyze.sh \
-            --rules ./rules.json \
+          ddanger-analyze.sh \
+            --rules rules.json \
             --output danger-results.json \
             --base ${{ github.base_ref }} \
             --verbose
