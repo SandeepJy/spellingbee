@@ -214,6 +214,9 @@ check_code_pattern() {
     local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_patterns[]?' 2>/dev/null || echo "")
    
     log "INFO" "Checking code pattern rule: $rule_name"
+
+    #fetch latest coe
+    ${get fetch origin main}
     
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
@@ -239,7 +242,7 @@ check_code_pattern() {
 
         
         # Combine staged and unstaged diffs
-        local diff_output=$(git fetch orign main; git diff origin/main -- "$file" 2>/dev/null || true)
+        local diff_output=$(git diff origin/main -- "$file" 2>/dev/null || true)
         
         
         if [[ -z "$diff_output" ]]; then
