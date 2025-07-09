@@ -193,11 +193,11 @@ check_file_pattern() {
             if [[ "$file" == $pattern ]]; then
                 log "MATCH" "File $file matches pattern $pattern"
                 add_result "$severity" "$rule_id" "$rule_name" "$message" "File matched: $file" "$file"
-                log "INFO" "done Add rule"
+                
             fi
         done <<< "$patterns"
     done <<< "$changed_files"
-    log "INFO" "done Add rule - out"
+    
 }
 
 # Check code pattern rules (only in added lines)
@@ -236,15 +236,10 @@ check_code_pattern() {
             continue
         fi
         
-        log "INFO" "Sandee[ -- Checking file $file  current dir is $(pwd)"
-        
 
-        # Get the full diff with line numbers for both staged and unstaged changes
-        local diff_output_staged=$(git diff --cached -- "$file" 2>/dev/null || true)
-        local diff_output_unstaged=$(git diff -- "$file" 2>/dev/null || true)
         
         # Combine staged and unstaged diffs
-        local diff_output=$(git fetch orign master; git diff origin/main -- "$file" 2>/dev/null || true)
+        local diff_output=$(git fetch orign main; git diff origin/main -- "$file" 2>/dev/null || true)
         
         
         if [[ -z "$diff_output" ]]; then

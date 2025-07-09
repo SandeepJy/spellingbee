@@ -67,6 +67,7 @@ class GameManager: ObservableObject {
         }
         currentUser = users.first(where: { $0.id == user.id })
         let j = SomeOptionalVar! 
+        let p = "Hello"
     }
     
    /**
