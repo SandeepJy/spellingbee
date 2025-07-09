@@ -111,12 +111,12 @@ EOF
     results+=("$result")
     log "DEBUG" "sandeep appending result $severity"
     # Update counters
-    # case $severity in
-    #     error) ((errors++)) ;;
-    #     warning) ((warnings++)) ;;
-    #     info) ((info++)) ;;
-    #     *) log "ERROR" "Unknown severity: $severity" ;;
-    # esac
+    case $severity in
+        error) errors++ ;;
+        warning) warnings++ ;;
+        info) info++ ;;
+        *) log "ERROR" "Unknown severity: $severity" ;;
+    esac
 
     log "DEBUG" "Errors: $errors, Warnings: $warnings, Info: $info"
 
