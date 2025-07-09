@@ -272,6 +272,9 @@ check_code_pattern() {
                     # This is an added line
                     local content="${line:1}"  # Remove the + prefix
 
+                     og "INFO" "Sandeep - diff output $content"
+       
+
                     # Check exclude patterns first
                     local excluded=false
                     if [[ -n "$exclude_patterns" ]]; then
