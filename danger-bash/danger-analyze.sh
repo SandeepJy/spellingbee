@@ -112,10 +112,9 @@ EOF
     log "DEBUG" "sandeep appending result $severity"
     # Update counters
     case $severity in
-        error) let errors++ ;;
-        warning) let warnings++ ;;
-        info) let info++ ;;
-        *) log "ERROR" "Unknown severity: $severity" ;;
+        error) let errors+=1 ;;
+        warning) let warnings+=1 ;;
+        info) let info+=1 ;;
     esac
 
     log "DEBUG" "Errors: $errors, Warnings: $warnings, Info: $info"
