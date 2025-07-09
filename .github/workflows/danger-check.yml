@@ -36,8 +36,8 @@ jobs:
         id: danger
         run: |
           # Run analysis
-          ./danger-bash/danger-analyze.sh \
-            --rules ./danger-bash/rules.json \
+          ./ddanger-analyze.sh \
+            --rules ./rules.json \
             --output danger-results.json \
             --base ${{ github.base_ref }} \
             --verbose
