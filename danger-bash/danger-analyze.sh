@@ -109,7 +109,7 @@ EOF
     log "DEBUG" "sandeep appending result"
     # Append result to results array
     results+=("$result")
-    log "DEBUG" "sandeep appending result 2"
+    log "DEBUG" "sandeep appending result $severity"
     # Update counters
     case $severity in
         error) ((errors++)) ;;
