@@ -214,6 +214,7 @@ check_code_pattern() {
     local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_patterns[]?' 2>/dev/null || echo "")
    
     log "INFO" "Checking code pattern rule: $rule_name"
+    cd ..
     
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
