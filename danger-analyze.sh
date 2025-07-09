@@ -236,7 +236,8 @@ check_code_pattern() {
             continue
         fi
         
-        log "INFO" "Sandee[ -- Checking file $file"
+        log "INFO" "Sandee[ -- Checking file $file  current dir is $(pwd)"
+        
 
         # Get the full diff with line numbers for both staged and unstaged changes
         local diff_output_staged=$(git diff --cached -- "$file" 2>/dev/null || true)
