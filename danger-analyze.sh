@@ -244,7 +244,8 @@ check_code_pattern() {
         local diff_output_unstaged=$(git diff -- "$file" 2>/dev/null || true)
         
         # Combine staged and unstaged diffs
-        local diff_output="$diff_output_staged$diff_output_unstaged"
+        local diff_output=$(git diff origin/main -- "$file" 2>/dev/null || true)
+        
         
         log "INFO" "Sandeep - diff output $diff_output"
         
