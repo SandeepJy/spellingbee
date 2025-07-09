@@ -292,7 +292,7 @@ check_code_pattern() {
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
                             
-                            log "INFO" "Sandeep - checking pattern $pattern in text $content"
+                            pattern="\b\w+!\b"
 
                             log "DEBUG" "Content: '$content'"
                             log "DEBUG" "Pattern: '$pattern'"
