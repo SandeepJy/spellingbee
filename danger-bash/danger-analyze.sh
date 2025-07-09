@@ -193,7 +193,7 @@ check_file_pattern() {
             # Convert glob pattern to find pattern
             if [[ "$file" == $pattern ]]; then
                 log "MATCH" "File $file matches pattern $pattern"
-                add_result "$severity" "$rule_id" "$rule_name" "$message" "File matched: $file" "$file"
+                #add_result "$severity" "$rule_id" "$rule_name" "$message" "File matched: $file" "$file"
                 log "INFO" "done Add rule"
             fi
         done <<< "$patterns"
