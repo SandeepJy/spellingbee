@@ -115,7 +115,10 @@ EOF
         error) ((errors++)) ;;
         warning) ((warnings++)) ;;
         info) ((info++)) ;;
+        *) log "ERROR" "Unknown severity: $severity" ;;
     esac
+
+    log "DEBUG" "Errors: $errors, Warnings: $warnings, Info: $info"
 
     log "DEBUG" "Result added successfully"
 }
