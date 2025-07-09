@@ -194,9 +194,11 @@ check_file_pattern() {
             if [[ "$file" == $pattern ]]; then
                 log "MATCH" "File $file matches pattern $pattern"
                 add_result "$severity" "$rule_id" "$rule_name" "$message" "File matched: $file" "$file"
+                log "INFO" "done Add rule"
             fi
         done <<< "$patterns"
     done <<< "$changed_files"
+    log "INFO" "done Add rule - out"
 }
 
 # Check code pattern rules (only in added lines)
