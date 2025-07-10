@@ -1,277 +1,555 @@
 #!/bin/bash
 #
-# github-pr-comment.sh - Creates GitHub PR comments from danger analysis results
-# This script is designed to be used in GitHub Actions
+# danger-analyze.sh - Main analyzer script for checking git diffs against rules
+# This script replaces the Danger JS functionality with pure bash
 #
 set -euo pipefail
 
-# Environment variables (should be set by GitHub Actions)
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
-GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-}"
-GITHUB_PR_NUMBER="${GITHUB_PR_NUMBER:-}"
-RESULTS_FILE="${1:-danger-results.json}"
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
 
-# Colors for output (when not in CI)
-if [[ -t 1 ]]; then
-    RED='\033[0;31m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    GREEN='\033[0;32m'
-    NC='\033[0m'
-else
-    RED=''
-    YELLOW=''
-    BLUE=''
-    GREEN=''
-    NC=''
-fi
+# Default configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RULES_FILE="${RULES_FILE:-${SCRIPT_DIR}/rules.json}"
+OUTPUT_FILE="${OUTPUT_FILE:-danger-results.json}"
+BASE_BRANCH="${BASE_BRANCH:-main}"
+VERBOSE="${VERBOSE:-false}"
 
-# Validate inputs
-validate_inputs() {
-    if [[ -z "$GITHUB_TOKEN" ]]; then
-        echo "Error: GITHUB_TOKEN environment variable is not set"
-        exit 1
-    fi
-    
-    if [[ -z "$GITHUB_REPOSITORY" ]]; then
-        echo "Error: GITHUB_REPOSITORY environment variable is not set"
-        exit 1
-    fi
-    
-    if [[ -z "$GITHUB_PR_NUMBER" ]]; then
-        echo "Error: GITHUB_PR_NUMBER environment variable is not set"
-        exit 1
-    fi
-    
-    if [[ ! -f "$RESULTS_FILE" ]]; then
-        echo "Error: Results file not found: $RESULTS_FILE"
-        exit 1
+# Counters
+errors=0
+warnings=0
+info=0
+results=()
+
+# Initialize results JSON
+init_results() {
+    cat > "$OUTPUT_FILE" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "branch": "$(git rev-parse --abbrev-ref HEAD)",
+  "base_branch": "${BASE_BRANCH}",
+  "commit": "$(git rev-parse HEAD)",
+  "results": {
+    "errors": [],
+    "warnings": [],
+    "infos": []
+  },
+  "summary": {
+    "error_count": 0,
+    "warning_count": 0,
+    "info_count": 0,
+    "passed": false
+  }
+}
+EOF
+}
+
+# Log function
+log() {
+    local level=$1
+    shift
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $level: $*" >&2
     fi
 }
 
-# Generate markdown comment from results
-generate_comment() {
-    local results_json=$(cat "$RESULTS_FILE")
+# Add result to results array
+add_result() {
+    local severity=$1
+    local rule_id=$2
+    local rule_name=$3
+    local message=$4
+    local details=$5
+    local file=$6
+    local line_number=${7:-0}
+
+   
+    # Escape JSON strings
+    message=$(echo "$message" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape message: $message"
+        return 1
+    fi
+
+    details=$(echo "$details" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape details: $details"
+        return 1
+    fi
+
+    file=$(echo "$file" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape file: $file"
+        return 1
+    fi
+
+    rule_name=$(echo "$rule_name" | jq -Rs . 2>&1)
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to escape rule_name: $rule_name"
+        return 1
+    fi
     
-    local error_count=$(echo "$results_json" | jq -r '.summary.error_count')
-    local warning_count=$(echo "$results_json" | jq -r '.summary.warning_count')
-    local info_count=$(echo "$results_json" | jq -r '.summary.info_count')
-    local passed=$(echo "$results_json" | jq -r '.summary.passed')
-    local timestamp=$(echo "$results_json" | jq -r '.timestamp')
-    local commit=$(echo "$results_json" | jq -r '.commit' | cut -c1-7)
+    # Create result object
+    local result=$(cat <<EOF
+{
+  "rule_id": "$rule_id",
+  "rule_name": $rule_name,
+  "severity": "$severity",
+  "message": $message,
+  "details": $details,
+  "file": $file,
+  "line": $line_number
+}
+EOF
+)
+
+    # Append result to results array
+    results+=("$result")
+
+    # Update counters
+    case $severity in
+        error) ((errors++)) ;;
+        warning) ((warnings++)) ;;
+        info) ((info++)) ;;
+    esac
+
+    log "DEBUG" "Result added successfully"
+}
+
+# Update results in JSON file after processing all rules
+update_results() {
+    local temp_file=$(mktemp)
+
+    # Create initial JSON structure with empty results arrays
+    cat > "$temp_file" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "branch": "$(git rev-parse --abbrev-ref HEAD)",
+  "base_branch": "${BASE_BRANCH}",
+  "commit": "$(git rev-parse HEAD)",
+  "results": {
+    "errors": [],
+    "warnings": [],
+    "infos": []
+  },
+  "summary": {
+    "error_count": $errors,
+    "warning_count": $warnings,
+    "info_count": $info,
+    "passed": false
+  }
+}
+EOF
+
+    # Append results to the appropriate arrays
+    for result in "${results[@]}"; do
+        local severity=$(echo "$result" | jq -r '.severity')
+        local severity_key="${severity}s"
+        
+        jq ".results.${severity_key} += [$result]" "$temp_file" > "$OUTPUT_FILE"
+        if [[ $? -ne 0 ]]; then
+            log "ERROR" "Failed to update results in JSON file: $OUTPUT_FILE"
+            return 1
+        fi
+        
+        mv "$OUTPUT_FILE" "$temp_file"
+    done
+
+    # Update summary
+    jq ".summary.error_count = $errors | 
+        .summary.warning_count = $warnings | 
+        .summary.info_count = $info | 
+        .summary.passed = $(if [[ $errors -eq 0 ]]; then echo "true"; else echo "false"; fi)" "$temp_file" > "$OUTPUT_FILE"
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to update summary in JSON file: $OUTPUT_FILE"
+        return 1
+    fi
+
+    mv "$temp_file" "$OUTPUT_FILE"
+
+    log "DEBUG" "Results and summary updated successfully"
+}
+
+
+# Check file pattern rules
+check_file_pattern() {
+    local rule_json=$1
+    local changed_files=$2
     
-    # Start building the comment
-    local comment="## 🔍 Danger Analysis Report\n\n"
+    local rule_id=$(echo "$rule_json" | jq -r '.id')
+    local rule_name=$(echo "$rule_json" | jq -r '.name')
+    local severity=$(echo "$rule_json" | jq -r '.severity')
+    local message=$(echo "$rule_json" | jq -r '.message')
+    local patterns=$(echo "$rule_json" | jq -r '.patterns[]')
     
-    # Add summary header
-    if [[ "$passed" == "true" ]]; then
-        comment+="### ✅ All checks passed!\n\n"
+    log "INFO" "Checking rule: $rule_name"
+    
+    while IFS= read -r file; do
+        while IFS= read -r pattern; do
+            # Convert glob pattern to find pattern
+            if [[ "$file" == $pattern ]]; then
+                log "MATCH" "File $file matches pattern $pattern"
+                add_result "$severity" "$rule_id" "$rule_name" "$message" "File matched: $file" "$file"
+            fi
+        done <<< "$patterns"
+    done <<< "$changed_files"
+}
+
+# Check code pattern rules (only in added lines)
+check_code_pattern() {
+    local rule_json=$1
+    local changed_files=$2
+    
+    local rule_id=$(echo "$rule_json" | jq -r '.id')
+    local rule_name=$(echo "$rule_json" | jq -r '.name')
+    local severity=$(echo "$rule_json" | jq -r '.severity')
+    local message=$(echo "$rule_json" | jq -r '.message')
+    local patterns=$(echo "$rule_json" | jq -r '.patterns[]')
+    local file_patterns=$(echo "$rule_json" | jq -r '.file_patterns[]?' 2>/dev/null || echo "")
+    local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_patterns[]?' 2>/dev/null || echo "")
+   
+    log "INFO" "Checking code pattern rule: $rule_name"
+    
+    while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        
+        # Check if file matches file_patterns
+        local should_check=false
+        
+        if [[ -z "$file_patterns" ]] || [[ "$file_patterns" == "**" ]]; then
+            should_check=true
+        else
+            while IFS= read -r file_pattern; do
+                if [[ -n "$file_pattern" ]] && [[ "$file" == $file_pattern ]]; then
+                    should_check=true
+                    break
+                fi
+            done <<< "$file_patterns"
+        fi
+        
+        if [[ "$should_check" == "false" ]]; then
+            continue
+        fi
+        
+        local diff_output=$(git diff "$BASE_BRANCH" HEAD -- "$file" 2>/dev/null || true)
+    
+        if [[ -z "$diff_output" ]]; then
+            continue
+        fi
+        
+        # Parse diff to get added lines with their line numbers
+        local current_line=0
+        local in_hunk=false
+        
+        while IFS= read -r line; do
+
+
+            if [[ "$line" =~ ^@@\ -[0-9]+,[0-9]+\ \+([0-9]+),[0-9]+\ @@ ]]; then
+                # Extract starting line number for new file
+                current_line=${BASH_REMATCH[1]}
+                in_hunk=true
+                continue
+            fi
+            
+            if [[ "$in_hunk" == "true" ]]; then
+                if [[ "$line" =~ ^[+] ]]; then
+                    # This is an added line
+                    local content="${line:1}"  # Remove the + prefix
+
+                    # Check exclude patterns first
+                    local excluded=false
+                    if [[ -n "$exclude_patterns" ]]; then
+                        while IFS= read -r exclude_pattern; do
+                            [[ -z "$exclude_pattern" ]] && continue
+                            if [[ "$content" == *"$exclude_pattern"* ]]; then
+                                excluded=true
+                                break
+                            fi
+                        done <<< "$exclude_patterns"
+                    fi
+                    
+                    if [[ "$excluded" == "false" ]]; then
+                        # Check each pattern against the content
+                        while IFS= read -r pattern; do
+                            [[ -z "$pattern" ]] && continue
+                            
+                            # Use grep for regex matching
+                            if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+                                log "MATCH" "Pattern '$pattern' found in $file at line $current_line"
+                                local detail="Pattern found in added line: $(echo "$content" | head -c 100)..."
+                                add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "$file" "$current_line"
+                            fi
+                        done <<< "$patterns"
+                    fi
+                    
+                    ((current_line++))
+                elif [[ "$line" =~ ^[^-] ]]; then
+                    # Context line or unchanged line
+                    ((current_line++))
+                fi
+                # Lines starting with - are deletions, don't increment line number
+            fi
+        done <<< "$diff_output"
+    done <<< "$changed_files"
+}
+
+# Check file size rules
+check_file_size() {
+    local rule_json=$1
+    local changed_files=$2
+    
+    local rule_id=$(echo "$rule_json" | jq -r '.id')
+    local rule_name=$(echo "$rule_json" | jq -r '.name')
+    local severity=$(echo "$rule_json" | jq -r '.severity')
+    local message=$(echo "$rule_json" | jq -r '.message')
+    local max_size_kb=$(echo "$rule_json" | jq -r '.max_size_kb')
+    local file_patterns=$(echo "$rule_json" | jq -r '.file_patterns[]?' 2>/dev/null || echo "**")
+    local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_patterns[]?' 2>/dev/null || echo "")
+    
+    log "INFO" "Checking file size rule: $rule_name"
+    
+    while IFS= read -r file; do
+        [[ ! -f "$file" ]] && continue
+        
+        # Check exclude patterns
+        local excluded=false
+        if [[ -n "$exclude_patterns" ]]; then
+            while IFS= read -r exclude_pattern; do
+                [[ -z "$exclude_pattern" ]] && continue
+                if [[ "$file" == $exclude_pattern ]]; then
+                    excluded=true
+                    break
+                fi
+            done <<< "$exclude_patterns"
+        fi
+        
+        [[ "$excluded" == "true" ]] && continue
+        
+        # Check file size
+        local size_kb=$(( $(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo 0) / 1024 ))
+        
+        if (( size_kb > max_size_kb )); then
+            log "MATCH" "File $file exceeds size limit: ${size_kb}KB > ${max_size_kb}KB"
+            local detail="File size: ${size_kb}KB (limit: ${max_size_kb}KB)"
+            add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "$file"
+        fi
+    done <<< "$changed_files"
+}
+
+get_changed_files() {
+    # Get files changed between BASE_BRANCH and HEAD
+    git diff --name-only "$BASE_BRANCH" HEAD 2>/dev/null || echo ""
+}
+
+# Check if file should be excluded
+is_excluded_file() {
+    local file=$1
+    local exclude_patterns=$(jq -r '.settings.exclude_files[]?' "$RULES_FILE" 2>/dev/null)
+    
+    if [[ -n "$exclude_patterns" ]]; then
+        while IFS= read -r pattern; do
+            [[ -z "$pattern" ]] && continue
+            if [[ "$file" == $pattern ]]; then
+                return 0  # File is excluded
+            fi
+        done <<< "$exclude_patterns"
+    fi
+    
+    return 1  # File is not excluded
+}
+
+# Process all rules
+process_rules() {
+    local changed_files=$(get_changed_files)
+
+    
+    if [[ -z "$changed_files" ]]; then
+        log "WARN" "No changed files found"
+        return 0
+    fi
+    
+    # Filter out excluded files
+    local filtered_files=""
+    while IFS= read -r file; do
+        if ! is_excluded_file "$file"; then
+            filtered_files+="${file}"$'\n'
+        else
+            log "INFO" "Excluding file: $file"
+        fi
+    done <<< "$changed_files"
+
+    # Process each rule
+    local rules=$(jq -c '.rules[]' "$RULES_FILE" 2>/dev/null)
+    
+    while IFS= read -r rule; do
+        
+        [[ -z "$rule" ]] && continue
+        
+        local rule_type=$(echo "$rule" | jq -r '.type')
+
+        
+        case "$rule_type" in
+            file_pattern)
+                check_file_pattern "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing file_pattern rule for: $rule"
+                fi
+                ;;
+            code_pattern)
+                check_code_pattern "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing code_pattern rule for: $rule"
+                fi
+                ;;
+            file_size)
+                check_file_size "$rule" "$filtered_files"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing file_size rule for: $rule"
+                fi
+                ;;
+            *)
+                log "WARN" "Unknown rule type: $rule_type"
+                ;;
+        esac
+    done <<< "$rules"
+}
+
+
+# Update summary in results
+update_summary() {
+    local passed="true"
+    local fail_on_errors=$(jq -r '.settings.fail_on_errors' "$RULES_FILE" 2>/dev/null || echo "true")
+    local max_warnings=$(jq -r '.settings.max_warnings' "$RULES_FILE" 2>/dev/null || echo "999")
+    
+    # Check if should fail
+    if [[ "$fail_on_errors" == "true" ]] && (( errors > 0 )); then
+        passed="false"
+    fi
+    
+    if (( warnings > max_warnings )); then
+        passed="false"
+    fi
+    
+    # Update summary
+    local temp_file=$(mktemp)
+    jq ".summary.error_count = $errors | 
+        .summary.warning_count = $warnings | 
+        .summary.info_count = $info | 
+        .summary.passed = $passed" "$OUTPUT_FILE" > "$temp_file"
+    mv "$temp_file" "$OUTPUT_FILE"
+}
+
+# Print summary to stdout
+print_summary() {
+    echo ""
+    echo "========================================="
+    echo "         Danger Analysis Summary         "
+    echo "========================================="
+    
+    if (( errors == 0 && warnings == 0 && info == 0 )); then
+        echo -e "${GREEN}✅ All checks passed!${NC}"
     else
-        comment+="### ❌ Issues found that require attention\n\n"
+        if (( errors > 0 )); then
+            echo -e "${RED}❌ Errors: $errors${NC}"
+        fi
+        if (( warnings > 0 )); then
+            echo -e "${YELLOW}⚠️  Warnings: $warnings${NC}"
+        fi
+        if (( info > 0 )); then
+            echo -e "${BLUE}ℹ️  Info: $info${NC}"
+        fi
     fi
     
-    # Add summary stats
-    comment+="**Summary** (commit \`${commit}\`)\n"
-    comment+="- 🔴 **Errors:** ${error_count}\n"
-    comment+="- 🟡 **Warnings:** ${warning_count}\n"
-    comment+="- 🔵 **Info:** ${info_count}\n\n"
+    echo "========================================="
+    echo ""
+    echo "Full results saved to: $OUTPUT_FILE"
     
-    # Add errors section if any
-    if [[ "$error_count" -gt 0 ]]; then
-        comment+="### ❌ Errors\n\n"
-        comment+="These issues must be fixed before merging:\n\n"
-        
-        local errors=$(echo "$results_json" | jq -c '.results.errors[]')
-        while IFS= read -r error; do
-            [[ -z "$error" ]] && continue
-            
-            local rule_name=$(echo "$error" | jq -r '.rule_name')
-            local message=$(echo "$error" | jq -r '.message')
-            local file=$(echo "$error" | jq -r '.file')
-            local line=$(echo "$error" | jq -r '.line')
-            local details=$(echo "$error" | jq -r '.details')
-            
-            comment+="#### 🚫 ${rule_name}\n"
-            comment+="${message}\n\n"
-            comment+="**File:** \`${file}\`"
-            if [[ "$line" != "0" ]]; then
-                comment+=" (line ${line})"
-            fi
-            comment+="\n"
-            if [[ "$details" != "null" ]] && [[ -n "$details" ]]; then
-                comment+="**Details:** ${details}\n"
-            fi
-            comment+="\n---\n\n"
-        done <<< "$errors"
-    fi
-    
-    # Add warnings section if any
-    if [[ "$warning_count" -gt 0 ]]; then
-        comment+="### ⚠️ Warnings\n\n"
-        comment+="Please review these warnings:\n\n"
-        
-        local warnings=$(echo "$results_json" | jq -c '.results.warnings[]')
-        while IFS= read -r warning; do
-            [[ -z "$warning" ]] && continue
-            
-            local rule_name=$(echo "$warning" | jq -r '.rule_name')
-            local message=$(echo "$warning" | jq -r '.message')
-            local file=$(echo "$warning" | jq -r '.file')
-            local line=$(echo "$warning" | jq -r '.line')
-            local details=$(echo "$warning" | jq -r '.details')
-            
-            comment+="#### ⚠️ ${rule_name}\n"
-            comment+="${message}\n\n"
-            comment+="**File:** \`${file}\`"
-            if [[ "$line" != "0" ]]; then
-                comment+=" (line ${line})"
-            fi
-            comment+="\n"
-            if [[ "$details" != "null" ]] && [[ -n "$details" ]]; then
-                comment+="**Details:** ${details}\n"
-            fi
-            comment+="\n---\n\n"
-        done <<< "$warnings"
-    fi
-    
-    # Add info section if any
-    if [[ "$info_count" -gt 0 ]]; then
-        comment+="### ℹ️ Information\n\n"
-        comment+="<details>\n"
-        comment+="<summary>Click to expand informational messages</summary>\n\n"
-        
-        local infos=$(echo "$results_json" | jq -c '.results.info[]')
-        while IFS= read -r info; do
-            [[ -z "$info" ]] && continue
-            
-            local rule_name=$(echo "$info" | jq -r '.rule_name')
-            local message=$(echo "$info" | jq -r '.message')
-            local file=$(echo "$info" | jq -r '.file')
-            local details=$(echo "$info" | jq -r '.details')
-            
-            comment+="#### ℹ️ ${rule_name}\n"
-            comment+="${message}\n\n"
-            comment+="**File:** \`${file}\`\n"
-            if [[ "$details" != "null" ]] && [[ -n "$details" ]]; then
-                comment+="**Details:** ${details}\n"
-            fi
-            comment+="\n---\n\n"
-        done <<< "$infos"
-        
-        comment+="</details>\n\n"
-    fi
-    
-    # Add footer
-    comment+="---\n"
-    comment+="*Generated at ${timestamp} by Danger Bash Analysis*\n"
-    comment+="*Rules can be configured in \`danger-bash/rules.json\`*"
-    
-    echo "$comment"
-}
-
-# Find existing comment ID
-find_existing_comment() {
-    local comments_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${GITHUB_PR_NUMBER}/comments"
-    
-    # Get all comments and find one that contains our signature
-    local comment_id=$(curl -s \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        "$comments_url" | \
-        jq -r '.[] | select(.body | contains("🔍 Danger Analysis Report")) | .id' | \
-        head -n 1)
-    
-    echo "${comment_id:-}"
-}
-
-# Post or update GitHub comment
-post_comment() {
-    local comment_body=$1
-    local existing_comment_id=$(find_existing_comment)
-    
-    # Escape the comment for JSON
-    local json_body=$(echo "$comment_body" | jq -Rs '.')
-    
-    if [[ -n "$existing_comment_id" ]]; then
-        # Update existing comment
-        echo "Updating existing comment (ID: ${existing_comment_id})..."
-        
-        curl -s -X PATCH \
-            -H "Authorization: token ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/comments/${existing_comment_id}" \
-            -d "{\"body\": ${json_body}}" > /dev/null
-        
-        echo "✅ Comment updated successfully"
-    else
-        # Create new comment
-        echo "Creating new comment..."
-        
-        curl -s -X POST \
-            -H "Authorization: token ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${GITHUB_PR_NUMBER}/comments" \
-            -d "{\"body\": ${json_body}}" > /dev/null
-        
-        echo "✅ Comment created successfully"
-    fi
-}
-
-# Set GitHub Action outputs and exit code
-set_github_outputs() {
-    local passed=$(jq -r '.summary.passed' "$RESULTS_FILE")
-    local error_count=$(jq -r '.summary.error_count' "$RESULTS_FILE")
-    local warning_count=$(jq -r '.summary.warning_count' "$RESULTS_FILE")
-    
-    # Set outputs if in GitHub Actions
-    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        echo "danger_passed=${passed}" >> "$GITHUB_OUTPUT"
-        echo "danger_error_count=${error_count}" >> "$GITHUB_OUTPUT"
-        echo "danger_warning_count=${warning_count}" >> "$GITHUB_OUTPUT"
-    fi
-    
-    # Exit with error if checks didn't pass
+    # Return non-zero exit code if there are errors
+    local passed=$(jq -r '.summary.passed' "$OUTPUT_FILE")
     if [[ "$passed" == "false" ]]; then
-        echo -e "${RED}❌ PR blocked due to danger checks${NC}"
-        exit 1
-    else
-        echo -e "${GREEN}✅ All danger checks passed${NC}"
-        exit 0
+        return 1
     fi
+    
+    return 0
 }
 
 # Main execution
 main() {
-    echo "📝 Generating GitHub PR comment from analysis results..."
-    
-    # Validate inputs
-    validate_inputs
-    
-    # Generate markdown comment
-    local comment=$(generate_comment)
-    
-    # Post comment to GitHub
-    post_comment "$comment"
-    
-    # Set outputs and exit
-    set_github_outputs
-}
+    echo "🔍 Starting Danger Analysis..."
 
-# Check if running in CI mode or local mode
-if [[ -n "$GITHUB_TOKEN" ]] && [[ -n "$GITHUB_REPOSITORY" ]] && [[ -n "$GITHUB_PR_NUMBER" ]]; then
-    # CI mode - post to GitHub
-    main
-else
-    # Local mode - just print the comment
-    echo "Running in local mode (no GitHub environment variables found)"
-    echo "Generated comment preview:"
-    echo "========================================="
-    generate_comment
-    echo "========================================="
-    
-    # Still check if passed
-    local passed=$(jq -r '.summary.passed' "$RESULTS_FILE")
-    if [[ "$passed" == "false" ]]; then
+    # Check dependencies
+    if ! command -v jq &> /dev/null; then
+        echo "Error: jq is required but not installed. Please install it first."
         exit 1
     fi
-fi
+    
+    if ! command -v git &> /dev/null; then
+        echo "Error: git is required but not installed."
+        exit 1
+    fi
+    
+    # Check if rules file exists
+    if [[ ! -f "$RULES_FILE" ]]; then
+        echo "Error: Rules file not found at $RULES_FILE"
+        exit 1
+    fi
+    
+    # Initialize results
+    init_results
+    
+    # Process rules
+    process_rules
+    
+    # Save results to JSON file
+    update_results
+
+    # Update summary
+    update_summary
+    
+    # Print summary and exit with appropriate code
+    print_summary
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -r|--rules)
+            RULES_FILE="$2"
+            shift 2
+            ;;
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -b|--base)
+            BASE_BRANCH="$2"
+            shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE="true"
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  -r, --rules FILE     Path to rules.json file (default: ./rules.json)"
+            echo "  -o, --output FILE    Output file for results (default: danger-results.json)"
+            echo "  -b, --base BRANCH    Base branch to compare against (default: main)"
+            echo "  -v, --verbose        Enable verbose logging"
+            echo "  -h, --help           Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use -h or --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Run main function
+main
