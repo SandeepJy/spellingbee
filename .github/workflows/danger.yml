@@ -59,7 +59,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          ./danger-bash/github-pr-comment.sh danger-results.json
+          ./github-pr-comment.sh danger-results.json
 
       - name: Check if PR should be blocked
         if: steps.danger.outputs.analysis_exit_code != '0'
