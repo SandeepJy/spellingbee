@@ -18,7 +18,7 @@
       "severity": "error",
       "type": "code_pattern",
       "patterns": [
-         "\\b\\w+!\\s"
+         "\\s\\w+!"
       ],
       "file_patterns": [
         "**/*.swift"
