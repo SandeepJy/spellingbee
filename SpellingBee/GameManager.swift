@@ -18,7 +18,6 @@ class GameManager: ObservableObject {
         loadUsers()
         loadGames()
         let k = ForcedUnwarp!
-        
     }
     
     func getDocumentsDirectory() -> URL {
