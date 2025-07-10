@@ -34,8 +34,10 @@ jobs:
 
       - name: Run Danger Analysis
         id: danger
+        env:
+          GITHUB_ACTIONS: true
         run: |
-          # Run analysis
+          # Run analysis comparing PR branch to base branch
           ./danger-analyze.sh \
             --rules rules.json \
             --output danger-results.json \

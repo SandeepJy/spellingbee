@@ -28,15 +28,32 @@ fi
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
     echo -e "${YELLOW}Warning: You have uncommitted changes${NC}"
-    echo "These changes will be included in the analysis."
+    echo "The analysis will only include committed changes."
+    echo "Please commit your changes first if you want them analyzed."
     echo ""
-    read -p "Continue? (y/N) " -n 1 -r
+    read -p "Continue with analysis of committed changes only? (y/N) " -n 1 -r
     echo ""
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo "Aborted."
         exit 1
     fi
 fi
+
+# Check if there are any commits ahead of base branch
+COMMITS_AHEAD=$(git rev-list --count "${BASE_BRANCH}..HEAD" 2>/dev/null || echo "0")
+if [[ "$COMMITS_AHEAD" -eq 0 ]]; then
+    echo -e "${YELLOW}Warning: No commits found ahead of ${BASE_BRANCH}${NC}"
+    echo "Make sure you have committed your changes and are on the correct branch."
+    echo ""
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+echo -e "${BLUE}Commits ahead of ${BASE_BRANCH}:${NC} $COMMITS_AHEAD"
 
 # Get current branch
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)

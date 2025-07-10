@@ -112,9 +112,9 @@ EOF
 
     # Update counters
     case $severity in
-        error) ((++errors)) ;;
-        warning) ((++warnings)) ;;
-        info) ((++info)) ;;
+        error) ((errors++)) ;;
+        warning) ((warnings++)) ;;
+        info) ((info++)) ;;
     esac
 
     log "DEBUG" "Result added successfully"
@@ -214,6 +214,15 @@ check_code_pattern() {
    
     log "INFO" "Checking code pattern rule: $rule_name"
     
+    local base_ref="${BASE_BRANCH}"
+    
+    # In GitHub Actions, we might need to use origin/base_branch
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            base_ref="origin/${BASE_BRANCH}"
+        fi
+    fi
+    
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
         
@@ -235,8 +244,9 @@ check_code_pattern() {
             continue
         fi
         
-        local diff_output=$(git diff "$BASE_BRANCH" HEAD -- "$file" 2>/dev/null || true)
-    
+        # Get the diff between base branch and current HEAD for this file
+        local diff_output=$(git diff "${base_ref}...HEAD" -- "$file" 2>/dev/null || true)
+        
         if [[ -z "$diff_output" ]]; then
             continue
         fi
@@ -246,8 +256,6 @@ check_code_pattern() {
         local in_hunk=false
         
         while IFS= read -r line; do
-
-
             if [[ "$line" =~ ^@@\ -[0-9]+,[0-9]+\ \+([0-9]+),[0-9]+\ @@ ]]; then
                 # Extract starting line number for new file
                 current_line=${BASH_REMATCH[1]}
@@ -340,10 +348,36 @@ check_file_size() {
     done <<< "$changed_files"
 }
 
+
 get_changed_files() {
-    # Get files changed between BASE_BRANCH and HEAD
-    git diff --name-only "$BASE_BRANCH" HEAD 2>/dev/null || echo ""
+    local base_ref="${BASE_BRANCH}"
+    
+    # In GitHub Actions, we might need to use origin/base_branch
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        # Check if we have the base branch locally
+        if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            base_ref="origin/${BASE_BRANCH}"
+        fi
+    fi
+    
+    # Verify base branch exists
+    if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+        log "ERROR" "Base branch '$base_ref' not found. Please fetch it first: git fetch origin ${BASE_BRANCH}"
+        return 1
+    fi
+    
+    # Get files changed between base branch and current HEAD
+    local changed_files=$(git diff --name-only "${base_ref}...HEAD" 2>/dev/null)
+    
+    if [[ -z "$changed_files" ]]; then
+        log "INFO" "No files changed between ${base_ref} and HEAD"
+        return 0
+    fi
+    
+    log "INFO" "Found $(echo "$changed_files" | wc -l) changed files between ${base_ref} and HEAD"
+    echo "$changed_files"
 }
+
 
 # Check if file should be excluded
 is_excluded_file() {
