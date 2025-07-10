@@ -214,6 +214,15 @@ check_code_pattern() {
    
     log "INFO" "Checking code pattern rule: $rule_name"
     
+    local base_ref="${BASE_BRANCH}"
+    
+    # In GitHub Actions, we might need to use origin/base_branch
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            base_ref="origin/${BASE_BRANCH}"
+        fi
+    fi
+    
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
         
@@ -235,8 +244,9 @@ check_code_pattern() {
             continue
         fi
         
-        local diff_output=$(git diff "$BASE_BRANCH" HEAD -- "$file" 2>/dev/null || true)
-
+        # Get the diff between base branch and current HEAD for this file
+        local diff_output=$(git diff "${base_ref}...HEAD" -- "$file" 2>/dev/null || true)
+        
         if [[ -z "$diff_output" ]]; then
             continue
         fi
@@ -246,8 +256,6 @@ check_code_pattern() {
         local in_hunk=false
         
         while IFS= read -r line; do
-
-
             if [[ "$line" =~ ^@@\ -[0-9]+,[0-9]+\ \+([0-9]+),[0-9]+\ @@ ]]; then
                 # Extract starting line number for new file
                 current_line=${BASH_REMATCH[1]}
@@ -276,8 +284,6 @@ check_code_pattern() {
                         # Check each pattern against the content
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
-
-                            log "INFO" "Sandeep: $content using pattern $pattern"
                             
                             # Use grep for regex matching
                             if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
