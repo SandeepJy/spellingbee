@@ -237,8 +237,6 @@ check_code_pattern() {
         
         local diff_output=$(git diff "$BASE_BRANCH" HEAD -- "$file" 2>/dev/null || true)
 
-        log "INFO" "Sandeep: git diff $diff_output"
-    
         if [[ -z "$diff_output" ]]; then
             continue
         fi
@@ -278,6 +276,8 @@ check_code_pattern() {
                         # Check each pattern against the content
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
+
+                            log "INFO" "Sandeep: $content using pattern $pattern"
                             
                             # Use grep for regex matching
                             if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
