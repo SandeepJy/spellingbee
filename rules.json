@@ -19,7 +19,7 @@
       "type": "code_pattern",
       "patterns": [
          "\\s\\w+!$",
-         "\\s\\w+![\\s\\n]"
+         "\\s\\w+!\\s"
       ],
       "file_patterns": [
         "**/*.swift"
