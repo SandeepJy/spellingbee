@@ -112,9 +112,9 @@ EOF
 
     # Update counters
     case $severity in
-        error) ((++errors)) ;;
-        warning) ((++warnings)) ;;
-        info) ((++info)) ;;
+        error) ((errors++)) ;;
+        warning) ((warnings++)) ;;
+        info) ((info++)) ;;
     esac
 
     log "DEBUG" "Result added successfully"
