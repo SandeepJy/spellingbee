@@ -236,6 +236,8 @@ check_code_pattern() {
         fi
         
         local diff_output=$(git diff "$BASE_BRANCH" HEAD -- "$file" 2>/dev/null || true)
+
+        log "INFO" "Sandeep: git diff $diff_output"
     
         if [[ -z "$diff_output" ]]; then
             continue
