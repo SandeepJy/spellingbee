@@ -284,7 +284,7 @@ check_code_pattern() {
                         # Check each pattern against the content
                         while IFS= read -r pattern; do
                             [[ -z "$pattern" ]] && continue
-                            
+                            log "INFO" "sandeep: $content using pattern $pattern"
                             # Use grep for regex matching
                             if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
                                 log "MATCH" "Pattern '$pattern' found in $file at line $current_line"
