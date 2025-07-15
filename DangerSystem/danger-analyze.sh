@@ -14,7 +14,14 @@ NC='\033[0m' # No Color
 
 # Default configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULES_FILE="${RULES_FILE:-${SCRIPT_DIR}/rules.json}"
+# Check if running from root or DangerSystem folder
+if [[ "${SCRIPT_DIR##*/}" == "DangerSystem" ]]; then
+    # Running from inside DangerSystem folder
+    RULES_FILE="${RULES_FILE:-${SCRIPT_DIR}/rules.json}"
+else
+    # Running from project root
+    RULES_FILE="${RULES_FILE:-${SCRIPT_DIR}/DangerSystem/rules.json}"
+fi
 OUTPUT_FILE="${OUTPUT_FILE:-danger-results.json}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 VERBOSE="${VERBOSE:-false}"
@@ -172,6 +179,62 @@ EOF
     mv "$temp_file" "$OUTPUT_FILE"
 
     log "DEBUG" "Results and summary updated successfully"
+}
+
+check_pr_size() {
+    local rule_json=$1
+    
+    local rule_id=$(echo "$rule_json" | jq -r '.id')
+    local rule_name=$(echo "$rule_json" | jq -r '.name')
+    local severity=$(echo "$rule_json" | jq -r '.severity')
+    local message=$(echo "$rule_json" | jq -r '.message')
+    local max_lines=$(echo "$rule_json" | jq -r '.max_lines')
+    local exclude_patterns=$(echo "$rule_json" | jq -r '.exclude_files[]?' 2>/dev/null || echo "")
+    
+    log "INFO" "Checking PR size rule: $rule_name"
+    
+    local base_ref="${BASE_BRANCH}"
+    
+    # In GitHub Actions, we might need to use origin/base_branch
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            base_ref="origin/${BASE_BRANCH}"
+        fi
+    fi
+    
+    # Get total number of lines changed
+    local diff_stats=$(git diff "${base_ref}...HEAD" --numstat)
+    local total_lines=0
+    local excluded_lines=0
+    
+    while IFS=$'\t' read -r added deleted file; do
+        [[ -z "$file" ]] && continue
+        
+        # Check if file should be excluded
+        local exclude_this_file=false
+        if [[ -n "$exclude_patterns" ]]; then
+            while IFS= read -r pattern; do
+                [[ -z "$pattern" ]] && continue
+                if [[ "$file" == $pattern ]]; then
+                    exclude_this_file=true
+                    excluded_lines=$((excluded_lines + added + deleted))
+                    break
+                fi
+            done <<< "$exclude_patterns"
+        fi
+        
+        if [[ "$exclude_this_file" == "false" ]]; then
+            total_lines=$((total_lines + added + deleted))
+        fi
+    done <<< "$diff_stats"
+    
+    log "INFO" "Total lines changed: $total_lines (excluded: $excluded_lines)"
+    
+    if (( total_lines > max_lines )); then
+        log "MATCH" "PR exceeds size limit: ${total_lines} > ${max_lines} lines"
+        local detail="PR has ${total_lines} lines changed (limit: ${max_lines}). Consider breaking it into smaller PRs."
+        add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "PULL_REQUEST"
+    fi
 }
 
 
@@ -444,10 +507,16 @@ process_rules() {
                     log "ERROR" "Error processing file_size rule for: $rule"
                 fi
                 ;;
+            pr_size)
+                check_pr_size "$rule"
+                if [[ $? -ne 0 ]]; then
+                    log "ERROR" "Error processing pr_size rule for: $rule"
+                fi
+                ;;
             *)
                 log "WARN" "Unknown rule type: $rule_type"
                 ;;
-        esac
+esac
     done <<< "$rules"
 }
 

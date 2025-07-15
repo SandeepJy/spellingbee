@@ -5,6 +5,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Check if running from root or DangerSystem folder
+if [[ "${SCRIPT_DIR##*/}" == "DangerSystem" ]]; then
+    # Running from inside DangerSystem folder
+    DANGER_DIR="${SCRIPT_DIR}"
+else
+    # Running from project root
+    DANGER_DIR="${SCRIPT_DIR}/DangerSystem"
+fi
 BASE_BRANCH="${1:-main}"
 
 echo "🔍 Running Danger Analysis on committed changes..."
@@ -24,4 +32,4 @@ git fetch origin "$BASE_BRANCH" 2>/dev/null || {
 }
 
 # Run the test script
-exec "${SCRIPT_DIR}/test-locally.sh" "$BASE_BRANCH"
+exec "${DANGER_DIR}/test-locally.sh" "$BASE_BRANCH"

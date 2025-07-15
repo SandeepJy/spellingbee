@@ -13,6 +13,14 @@ NC='\033[0m'
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Check if running from root or DangerSystem folder
+if [[ "${SCRIPT_DIR##*/}" == "DangerSystem" ]]; then
+    # Running from inside DangerSystem folder
+    DANGER_DIR="${SCRIPT_DIR}"
+else
+    # Running from project root
+    DANGER_DIR="${SCRIPT_DIR}/DangerSystem"
+fi
 BASE_BRANCH="${1:-main}"
 
 echo -e "${BLUE}🧪 Testing Danger Checks Locally${NC}"
@@ -84,8 +92,8 @@ echo ""
 
 OUTPUT_FILE="/tmp/danger-results-$(date +%s).json"
 
-if "${SCRIPT_DIR}/danger-analyze.sh" \
-    --rules "${SCRIPT_DIR}/rules.json" \
+if "${DANGER_DIR}/danger-analyze.sh" \
+    --rules "${DANGER_DIR}/rules.json" \
     --output "$OUTPUT_FILE" \
     --base "$BASE_BRANCH" \
     --verbose; then

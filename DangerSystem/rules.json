@@ -12,6 +12,21 @@
       "message": "Entitlements file has been modified. Please ensure all changes are necessary and secure."
     },
     {
+      "id": "large-pr",
+      "name": "Large Pull Request",
+      "description": "Large PRs are harder to review. Consider breaking them into smaller ones.",
+      "severity": "warning",
+      "type": "pr_size",
+      "max_lines": 500,
+      "exclude_files": [
+        "**/Pods/**",
+        "**/package-lock.json",
+        "**/yarn.lock",
+        "**/Podfile.lock"
+      ],
+      "message": "This PR is quite large. Consider breaking it into smaller, more focused PRs."
+    },
+    {
       "id": "force-unwrap-usage",
       "name": "Force Unwrapping Detected",
       "description": "Force unwrapping can cause crashes and should be avoided",
