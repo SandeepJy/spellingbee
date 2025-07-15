@@ -29,8 +29,8 @@ jobs:
 
       - name: Make scripts executable
         run: |
-          chmod +x danger-analyze.sh
-          chmod +x github-pr-comment.sh
+          chmod +x DangerSystem/danger-analyze.sh
+          chmod +x DangerSystem/github-pr-comment.sh
 
       - name: Run Danger Analysis
         id: danger
@@ -38,8 +38,8 @@ jobs:
           GITHUB_ACTIONS: true
         run: |
           # Run analysis comparing PR branch to base branch
-          ./danger-analyze.sh \
-            --rules rules.json \
+          ./DangerSystem/danger-analyze.sh \
+            --rules DangerSystem/rules.json \
             --output danger-results.json \
             --base ${{ github.base_ref }} \
             --verbose
@@ -61,80 +61,10 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          ./github-pr-comment.sh danger-results.json
+          ./DangerSystem/github-pr-comment.sh danger-results.json
 
       - name: Check if PR should be blocked
         if: steps.danger.outputs.analysis_exit_code != '0'
         run: |
           echo "❌ Danger checks failed! Please fix the issues before merging."
           exit 1
-
-  # Optional: Add status check
-  danger-status:
-    name: Danger Status Check
-    runs-on: ubuntu-latest
-    needs: danger-analysis
-    if: always()
-
-    steps:
-      - name: Download results
-        uses: actions/download-artifact@v4
-        with:
-          name: danger-results
-
-      - name: Check results
-        run: |
-          if [ -f danger-results.json ]; then
-            passed=$(jq -r '.summary.passed' danger-results.json)
-            errors=$(jq -r '.summary.error_count' danger-results.json)
-            warnings=$(jq -r '.summary.warning_count' danger-results.json)
-            
-            echo "Danger Check Results:"
-            echo "  Passed: $passed"
-            echo "  Errors: $errors"
-            echo "  Warnings: $warnings"
-            
-            if [ "$passed" != "true" ]; then
-              echo "::error::Danger checks failed with $errors errors and $warnings warnings"
-              exit 1
-            fi
-          else
-            echo "::error::No danger results found"
-            exit 1
-          fi
-
-  # Alternative simplified workflow using composite action
-  danger-check-simple:
-    name: Danger Check (Simple)
-    runs-on: ubuntu-latest
-    if: false # Set to true to use this simplified version instead
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run Danger Bash Check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Fetch base branch
-          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
-
-          # Install jq
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-
-          # Run analysis and post comment
-          chmod +x ./danger-bash/*.sh
-
-          ./danger-bash/danger-analyze.sh \
-            --rules ./danger-bash/rules.json \
-            --output danger-results.json \
-            --base ${{ github.base_ref }}
-
-          # Post comment (will exit with error if checks failed)
-          GITHUB_REPOSITORY="${{ github.repository }}" \
-          GITHUB_PR_NUMBER="${{ github.event.pull_request.number }}" \
-          ./danger-bash/github-pr-comment.sh danger-results.json

@@ -14,10 +14,14 @@ NC='\033[0m' # No Color
 
 # Default configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 RULES_FILE="${RULES_FILE:-${SCRIPT_DIR}/rules.json}"
-OUTPUT_FILE="${OUTPUT_FILE:-danger-results.json}"
+OUTPUT_FILE="${OUTPUT_FILE:-${PROJECT_ROOT}/danger-results.json}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 VERBOSE="${VERBOSE:-false}"
+
+# Source utilities
+source "${SCRIPT_DIR}/lib/utils.sh"
 
 # Counters
 errors=0
@@ -48,15 +52,6 @@ init_results() {
 EOF
 }
 
-# Log function
-log() {
-    local level=$1
-    shift
-    if [[ "$VERBOSE" == "true" ]]; then
-        echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $level: $*" >&2
-    fi
-}
-
 # Add result to results array
 add_result() {
     local severity=$1
@@ -67,7 +62,6 @@ add_result() {
     local file=$6
     local line_number=${7:-0}
 
-   
     # Escape JSON strings
     message=$(echo "$message" | jq -Rs . 2>&1)
     if [[ $? -ne 0 ]]; then
@@ -170,10 +164,62 @@ EOF
     fi
 
     mv "$temp_file" "$OUTPUT_FILE"
-
     log "DEBUG" "Results and summary updated successfully"
 }
 
+# Check diff size rules
+check_diff_size() {
+    local rule_json=$1
+    
+    local rule_id=$(echo "$rule_json" | jq -r '.id')
+    local rule_name=$(echo "$rule_json" | jq -r '.name')
+    local severity=$(echo "$rule_json" | jq -r '.severity')
+    local message=$(echo "$rule_json" | jq -r '.message')
+    local max_lines=$(echo "$rule_json" | jq -r '.max_lines // 500')
+    local count_type=$(echo "$rule_json" | jq -r '.count_type // "added"')
+    
+    log "INFO" "Checking diff size rule: $rule_name (max: $max_lines lines, type: $count_type)"
+    
+    local base_ref="${BASE_BRANCH}"
+    
+    # In GitHub Actions, we might need to use origin/base_branch
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+            base_ref="origin/${BASE_BRANCH}"
+        fi
+    fi
+    
+    # Get diff stats
+    local diff_stats
+    case "$count_type" in
+        "added")
+            diff_stats=$(git diff --numstat "${base_ref}...HEAD" | awk '{added += $1} END {print added+0}')
+            ;;
+        "removed")
+            diff_stats=$(git diff --numstat "${base_ref}...HEAD" | awk '{removed += $2} END {print removed+0}')
+            ;;
+        "total"|*)
+            diff_stats=$(git diff --numstat "${base_ref}...HEAD" | awk '{added += $1; removed += $2} END {print added+removed+0}')
+            ;;
+    esac
+    
+    local line_count=${diff_stats:-0}
+    
+    log "INFO" "Diff stats: $line_count lines ($count_type)"
+    
+    if (( line_count > max_lines )); then
+        log "MATCH" "Diff size exceeds limit: $line_count > $max_lines"
+        local detail="This PR/diff has $line_count $count_type lines (limit: $max_lines). Consider breaking it into smaller changes."
+        add_result "$severity" "$rule_id" "$rule_name" "$message" "$detail" "DIFF_SIZE"
+        
+        # Add file breakdown for context
+        local file_breakdown=$(git diff --numstat "${base_ref}...HEAD" | sort -nr | head -10)
+        if [[ -n "$file_breakdown" ]]; then
+            local breakdown_detail="Top files by line changes:\n$file_breakdown"
+            add_result "info" "${rule_id}_breakdown" "Large Diff - File Breakdown" "Files contributing most to the large diff" "$breakdown_detail" "DIFF_BREAKDOWN"
+        fi
+    fi
+}
 
 # Check file pattern rules
 check_file_pattern() {
@@ -347,7 +393,6 @@ check_file_size() {
     done <<< "$changed_files"
 }
 
-
 get_changed_files() {
     local base_ref="${BASE_BRANCH}"
     
@@ -377,7 +422,6 @@ get_changed_files() {
     echo "$changed_files"
 }
 
-
 # Check if file should be excluded
 is_excluded_file() {
     local file=$1
@@ -398,7 +442,6 @@ is_excluded_file() {
 # Process all rules
 process_rules() {
     local changed_files=$(get_changed_files)
-
     
     if [[ -z "$changed_files" ]]; then
         log "WARN" "No changed files found"
@@ -419,30 +462,22 @@ process_rules() {
     local rules=$(jq -c '.rules[]' "$RULES_FILE" 2>/dev/null)
     
     while IFS= read -r rule; do
-        
         [[ -z "$rule" ]] && continue
         
         local rule_type=$(echo "$rule" | jq -r '.type')
-
         
         case "$rule_type" in
             file_pattern)
                 check_file_pattern "$rule" "$filtered_files"
-                if [[ $? -ne 0 ]]; then
-                    log "ERROR" "Error processing file_pattern rule for: $rule"
-                fi
                 ;;
             code_pattern)
                 check_code_pattern "$rule" "$filtered_files"
-                if [[ $? -ne 0 ]]; then
-                    log "ERROR" "Error processing code_pattern rule for: $rule"
-                fi
                 ;;
             file_size)
                 check_file_size "$rule" "$filtered_files"
-                if [[ $? -ne 0 ]]; then
-                    log "ERROR" "Error processing file_size rule for: $rule"
-                fi
+                ;;
+            diff_size)
+                check_diff_size "$rule"
                 ;;
             *)
                 log "WARN" "Unknown rule type: $rule_type"
@@ -450,7 +485,6 @@ process_rules() {
         esac
     done <<< "$rules"
 }
-
 
 # Update summary in results
 update_summary() {
@@ -513,6 +547,9 @@ print_summary() {
 # Main execution
 main() {
     echo "🔍 Starting Danger Analysis..."
+    
+    # Change to project root for git operations
+    cd "$PROJECT_ROOT"
 
     # Check dependencies
     if ! command -v jq &> /dev/null; then
@@ -569,8 +606,8 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  -r, --rules FILE     Path to rules.json file (default: ./rules.json)"
-            echo "  -o, --output FILE    Output file for results (default: danger-results.json)"
+            echo "  -r, --rules FILE     Path to rules.json file (default: ./DangerSystem/rules.json)"
+            echo "  -o, --output FILE    Output file for results (default: ./danger-results.json)"
             echo "  -b, --base BRANCH    Base branch to compare against (default: main)"
             echo "  -v, --verbose        Enable verbose logging"
             echo "  -h, --help           Show this help message"

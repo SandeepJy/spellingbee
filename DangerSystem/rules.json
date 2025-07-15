@@ -1,6 +1,26 @@
 {
   "rules": [
     {
+      "id": "large-pr-size",
+      "name": "Large PR Size Check",
+      "description": "PRs with too many changes are hard to review",
+      "severity": "warning",
+      "type": "diff_size",
+      "max_lines": 10,
+      "count_type": "total",
+      "message": "This PR is quite large and may be difficult to review. Consider breaking it into smaller, focused changes."
+    },
+    {
+      "id": "huge-pr-size",
+      "name": "Huge PR Size Check",
+      "description": "PRs with excessive changes should be blocked",
+      "severity": "error",
+      "type": "diff_size",
+      "max_lines": 1000,
+      "count_type": "total",
+      "message": "This PR is too large and must be broken down into smaller changes before it can be reviewed."
+    },
+    {
       "id": "entitlements-modification",
       "name": "Entitlements File Modified",
       "description": "Entitlements files should be reviewed carefully as they affect app permissions",
@@ -48,18 +68,6 @@
         "#if DEBUG"
       ],
       "message": "Print statement found. Consider using proper logging or removing debug prints."
-    },
-    {
-      "id": "firebase-config-changes",
-      "name": "Firebase Configuration Modified",
-      "description": "Firebase configuration changes need careful review",
-      "severity": "warning",
-      "type": "file_pattern",
-      "patterns": [
-        "**/GoogleService-Info.plist",
-        "**/Firebase/**"
-      ],
-      "message": "Firebase configuration has been modified. Please verify the changes are correct."
     },
     {
       "id": "large-file-addition",
@@ -111,9 +119,7 @@
     "max_warnings": 10,
     "exclude_files": [
       "**/Pods/**",
-      "**/DerivedData/**",
-      "**/.build/**",
-      "**/node_modules/**"
+      "**/DerivedData/**"
     ]
   }
 }
