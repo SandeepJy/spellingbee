@@ -1,0 +1,70 @@
+name: Danger Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  danger-analysis:
+    name: Run Danger Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper git diff
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+      - name: Install dependencies
+        run: |
+          # Install jq if not already available
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+
+      - name: Make scripts executable
+        run: |
+          chmod +x DangerSystem/danger-analyze.sh
+          chmod +x DangerSystem/github-pr-comment.sh
+
+      - name: Run Danger Analysis
+        id: danger
+        env:
+          GITHUB_ACTIONS: true
+        run: |
+          # Run analysis comparing PR branch to base branch
+          ./DangerSystem/danger-analyze.sh \
+            --rules DangerSystem/rules.json \
+            --output danger-results.json \
+            --base ${{ github.base_ref }} \
+            --verbose
+
+          # Save exit code
+          echo "analysis_exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: danger-results
+          path: danger-results.json
+          retention-days: 7
+
+      - name: Post PR comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          ./DangerSystem/github-pr-comment.sh danger-results.json
+
+      - name: Check if PR should be blocked
+        if: steps.danger.outputs.analysis_exit_code != '0'
+        run: |
+          echo "❌ Danger checks failed! Please fix the issues before merging."
+          exit 1
