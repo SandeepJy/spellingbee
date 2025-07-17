@@ -85,8 +85,8 @@ if [[ "${LOCAL_MODE}" == "true" ]]; then
 else
     # CI mode
     "${SCRIPTS_FULL_PATH}/danger-analyze.sh" \
-        --rules "Danger/rules.json" \
-        --custom-dir "Danger/custom-checks" \
+        --rules "../../Danger/rules.json" \
+        --custom-dir "../../Danger/custom-checks" \
         --output "danger-results.json" \
         --base "${GITHUB_BASE_REF:-main}" \
         --verbose
