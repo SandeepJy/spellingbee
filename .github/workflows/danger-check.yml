@@ -33,6 +33,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTIONS: true
           LOCAL_MODE: false
+          GEN_TOKEN: ${{ secrets.GEN_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Make the script executable
