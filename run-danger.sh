@@ -97,6 +97,6 @@ else
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         GITHUB_REPOSITORY="${GITHUB_REPOSITORY}" \
         GITHUB_PR_NUMBER="${GITHUB_EVENT_NUMBER:-${PR_NUMBER:-0}}" \
-        "${SCRIPTS_FULL_PATH}/github-pr-comment.sh" "${CUR_DIR}/Danger/danger-results.json"
+        "${SCRIPTS_FULL_PATH}/github-pr-comments.sh" "${CUR_DIR}/Danger/danger-results.json"
     fi
 fi
