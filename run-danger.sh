@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-DANGER_VERSION="${DANGER_VERSION:-v5.6}"
+DANGER_VERSION="${DANGER_VERSION:-v5.7}"
 DANGER_REPO_NAME="danger-core"
 DANGER_REPO="https://github.com/SandeepJy/${DANGER_REPO_NAME}"
 DANGER_DIR="Danger"
@@ -48,8 +48,9 @@ if [[ ! -d "$SCRIPTS_DIR" ]] || [[ "${UPDATE_DANGER:-}" == "true" ]]; then
     # Create temp directory
     TEMP_DIR=$(mktemp -d)
     
+
     # Download the release
-    curl --verbose -L "${DANGER_REPO}/archive/refs/tags/${DANGER_VERSION}.tar.gz" \
+    curl  -L "${DANGER_REPO}/archive/refs/tags/${DANGER_VERSION}.tar.gz" \
          -o "${TEMP_DIR}/danger-core.tar.gz" || {
         echo -e "${RED}Failed to download Danger core scripts${NC}"
         rm -rf "$TEMP_DIR"
