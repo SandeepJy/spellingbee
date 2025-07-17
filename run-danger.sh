@@ -89,7 +89,7 @@ else
     "${SCRIPTS_FULL_PATH}/danger-analyze.sh" \
         --rules "${CUR_DIR}/Danger/rules.json" \
         --custom-dir "${CUR_DIR}/Danger/custom-checks" \
-        --output "danger-results.json" \
+        --output "${CUR_DIR}/Danger/danger-results.json" \
         --base "${GITHUB_BASE_REF:-main}" \
         --verbose
     
