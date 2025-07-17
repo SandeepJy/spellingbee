@@ -93,10 +93,12 @@ else
         --base "${GITHUB_BASE_REF:-main}" \
         --verbose
     
+    echo "Sandeep - here"
+
     # Post comment if in GitHub Actions
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         GITHUB_REPOSITORY="${GITHUB_REPOSITORY}" \
         GITHUB_PR_NUMBER="${GITHUB_EVENT_NUMBER:-${PR_NUMBER:-0}}" \
-        "${SCRIPTS_FULL_PATH}/github-pr-comment.sh" "danger-results.json"
+        "${SCRIPTS_FULL_PATH}/github-pr-comment.sh" "${CUR_DIR}/Danger/danger-results.json"
     fi
 fi
