@@ -35,14 +35,16 @@ jobs:
       - name: Run Danger Analysis
         id: danger
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTIONS: true
+          LOCAL_MODE: false
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Run analysis comparing PR branch to base branch
-          ./DangerSystem/danger-analyze.sh \
-            --rules ./DangerSystem/rules.json \
-            --output danger-results.json \
-            --base ${{ github.base_ref }} \
-            --verbose
+          # Make the script executable
+          chmod +x run-danger.sh
+
+          # Run the danger system
+          ./run-danger.sh ${{ github.base_ref }}
 
           # Save exit code
           echo "analysis_exit_code=$?" >> $GITHUB_OUTPUT
