@@ -49,7 +49,7 @@ if [[ ! -d "$SCRIPTS_DIR" ]] || [[ "${UPDATE_DANGER:-}" == "true" ]]; then
     TEMP_DIR=$(mktemp -d)
     
     # Download the release
-    curl -L "${DANGER_REPO}/archive/refs/tags/${DANGER_VERSION}.tar.gz" \
+    curl --verbose -L "${DANGER_REPO}/archive/refs/tags/${DANGER_VERSION}.tar.gz" \
          -o "${TEMP_DIR}/danger-core.tar.gz" || {
         echo -e "${RED}Failed to download Danger core scripts${NC}"
         rm -rf "$TEMP_DIR"

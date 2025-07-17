@@ -41,7 +41,6 @@ jobs:
           # Run the danger system
           ./run-danger.sh ${{ github.base_ref }}
 
-          # Save exit code
           echo "analysis_exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
