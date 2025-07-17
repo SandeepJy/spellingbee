@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-DANGER_VERSION="${DANGER_VERSION:-v5.7}"
+DANGER_VERSION="${DANGER_VERSION:-v5.8}"
 DANGER_REPO_NAME="danger-core"
 DANGER_REPO="https://github.com/SandeepJy/${DANGER_REPO_NAME}"
 DANGER_DIR="Danger"
