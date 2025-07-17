@@ -12,6 +12,8 @@ DANGER_DIR="Danger"
 SCRIPTS_DIR="$DANGER_DIR/$DANGER_REPO_NAME-${DANGER_VERSION#v}"
 SCRIPTS_FULL_PATH="${SCRIPTS_DIR}/scripts"
 LOCAL_MODE="${LOCAL_MODE:-true}"
+CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 
 
 # Colors
@@ -85,8 +87,8 @@ if [[ "${LOCAL_MODE}" == "true" ]]; then
 else
     # CI mode
     "${SCRIPTS_FULL_PATH}/danger-analyze.sh" \
-        --rules "../../Danger/rules.json" \
-        --custom-dir "../../Danger/custom-checks" \
+        --rules "${CUR_DIR}/Danger/rules.json" \
+        --custom-dir "${CUR_DIR}/Danger/custom-checks" \
         --output "danger-results.json" \
         --base "${GITHUB_BASE_REF:-main}" \
         --verbose
