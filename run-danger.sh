@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-DANGER_VERSION="${DANGER_VERSION:-v5.3}"
+DANGER_VERSION="${DANGER_VERSION:-v5.4}"
 DANGER_REPO_NAME="danger-core"
 DANGER_REPO="https://github.com/SandeepJy/${DANGER_REPO_NAME}"
 DANGER_DIR="Danger"
@@ -93,8 +93,6 @@ else
         --base "${GITHUB_BASE_REF:-main}" \
         --verbose
     
-    echo "Sandeep - here"
-
     # Post comment if in GitHub Actions
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         GITHUB_REPOSITORY="${GITHUB_REPOSITORY}" \
