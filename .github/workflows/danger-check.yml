@@ -55,7 +55,7 @@ jobs:
       - name: Format and Post PR Comment
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GEN_TOKEN }}
           script: |
             const fs = require('fs');
 
