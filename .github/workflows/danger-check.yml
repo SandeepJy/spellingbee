@@ -52,116 +52,90 @@ jobs:
           path: Danger/danger-results.json
           retention-days: 7
 
-      - name: Read and format results
-        id: format-results
-        run: |
-          # Read the JSON file
-          if [ ! -f "Danger/danger-results.json" ]; then
-            echo "Results file not found"
-            exit 1
-          fi
-
-          # Extract counts
-          ERROR_COUNT=$(jq -r '.summary.error_count' Danger/danger-results.json)
-          WARNING_COUNT=$(jq -r '.summary.warning_count' Danger/danger-results.json)
-          INFO_COUNT=$(jq -r '.summary.info_count' Danger/danger-results.json)
-
-          echo "error_count=$ERROR_COUNT" >> $GITHUB_OUTPUT
-          echo "warning_count=$WARNING_COUNT" >> $GITHUB_OUTPUT
-          echo "info_count=$INFO_COUNT" >> $GITHUB_OUTPUT
-
-          # Calculate total warnings + infos
-          TOTAL_NON_ERRORS=$((WARNING_COUNT + INFO_COUNT))
-          echo "total_non_errors=$TOTAL_NON_ERRORS" >> $GITHUB_OUTPUT
-
-      - name: Create PR comment
+      - name: Format and Post PR Comment
         uses: actions/github-script@v7
-        env:
-          RESULTS_FILE: Danger/danger-results.json
         with:
-          github-token: ${{ secrets.GEN_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const path = require('path');
 
             // Read the results file
-            const resultsPath = path.join(process.env.GITHUB_WORKSPACE, process.env.RESULTS_FILE);
-            const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+            let results;
+            try {
+              const resultsJson = fs.readFileSync('Danger/danger-results.json', 'utf8');
+              results = JSON.parse(resultsJson);
+            } catch (error) {
+              console.error('Error reading results file:', error);
+              return;
+            }
 
-            // Get counts from the previous step
-            const errorCount = ${{ steps.format-results.outputs.error_count }};
-            const warningCount = ${{ steps.format-results.outputs.warning_count }};
-            const infoCount = ${{ steps.format-results.outputs.info_count }};
-            const totalNonErrors = ${{ steps.format-results.outputs.total_non_errors }};
+            // Extract data from results
+            const errors = results.results.errors || [];
+            const warnings = results.results.warnings || [];
+            const infos = results.results.infos || [];
+            const summary = results.summary;
 
             // Build the comment
             let comment = '## 🔍 Danger Analysis Results\n\n';
 
-            // Summary
-            comment += '### 📊 Summary\n';
-            comment += `- **Errors:** ${errorCount} ❌\n`;
-            comment += `- **Warnings:** ${warningCount} ⚠️\n`;
-            comment += `- **Info:** ${infoCount} ℹ️\n\n`;
+            // Add summary
+            comment += `**Summary:** ${summary.passed ? '✅ All checks passed!' : '❌ Issues found!'}\n`;
+            comment += `- **Errors:** ${summary.error_count}\n`;
+            comment += `- **Warnings:** ${summary.warning_count}\n`;
+            comment += `- **Info:** ${summary.info_count}\n\n`;
 
-            // Status
-            if (results.summary.passed) {
-              comment += '✅ **All checks passed!**\n\n';
-            } else {
-              comment += '❌ **Issues found that need attention**\n\n';
-            }
-
-            // Errors section
-            if (errorCount > 0) {
+            // Add errors section (always show all errors)
+            if (errors.length > 0) {
               comment += '### ❌ Errors\n\n';
-              results.results.errors.forEach((error, index) => {
+              errors.forEach((error, index) => {
                 comment += `<details>\n`;
                 comment += `<summary><strong>${index + 1}. ${error.rule_name.trim()}</strong> (${error.rule_id})</summary>\n\n`;
-                comment += `**File:** \`${error.file.trim()}\`${error.line > 0 ? ` (Line ${error.line})` : ''}\n\n`;
-                comment += `**Message:** ${error.message.trim()}\n\n`;
+                comment += `- **File:** \`${error.file.trim()}\`${error.line > 0 ? ` (line ${error.line})` : ''}\n`;
+                comment += `- **Message:** ${error.message.trim()}\n`;
                 if (error.details) {
-                  comment += `**Details:** ${error.details.trim()}\n`;
+                  comment += `- **Details:** ${error.details.trim()}\n`;
                 }
                 comment += '\n</details>\n\n';
               });
             }
 
-            // Warnings and Info sections
-            if (totalNonErrors > 20) {
+            // Handle warnings and info
+            const totalWarningsAndInfo = warnings.length + infos.length;
+
+            if (totalWarningsAndInfo > 20) {
+              // If more than 20 warnings/info combined, provide a link
               comment += '### ⚠️ Warnings and ℹ️ Info\n\n';
-              comment += `There are ${warningCount} warnings and ${infoCount} info messages.\n\n`;
+              comment += `There are ${warnings.length} warnings and ${infos.length} info messages.\n\n`;
               
               // Get the artifact URL
-              const runId = context.runId;
-              const artifactUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-              
-              comment += `Due to the large number of non-critical issues (${totalNonErrors} total), please check the full results in the [workflow artifacts](${artifactUrl}).\n\n`;
-              comment += `📎 Download the \`danger-results\` artifact to see all warnings and info messages.\n`;
+              const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              comment += `Due to the large number of warnings and info messages, please [view the full results in the workflow artifacts](${runUrl}#artifacts).\n\n`;
             } else {
               // Show all warnings
-              if (warningCount > 0) {
+              if (warnings.length > 0) {
                 comment += '### ⚠️ Warnings\n\n';
-                results.results.warnings.forEach((warning, index) => {
+                warnings.forEach((warning, index) => {
                   comment += `<details>\n`;
                   comment += `<summary><strong>${index + 1}. ${warning.rule_name.trim()}</strong> (${warning.rule_id})</summary>\n\n`;
-                  comment += `**File:** \`${warning.file.trim()}\`${warning.line > 0 ? ` (Line ${warning.line})` : ''}\n\n`;
-                  comment += `**Message:** ${warning.message.trim()}\n\n`;
+                  comment += `- **File:** \`${warning.file.trim()}\`${warning.line > 0 ? ` (line ${warning.line})` : ''}\n`;
+                  comment += `- **Message:** ${warning.message.trim()}\n`;
                   if (warning.details) {
-                    comment += `**Details:** ${warning.details.trim()}\n`;
+                    comment += `- **Details:** ${warning.details.trim()}\n`;
                   }
                   comment += '\n</details>\n\n';
                 });
               }
               
               // Show all info
-              if (infoCount > 0) {
+              if (infos.length > 0) {
                 comment += '### ℹ️ Info\n\n';
-                results.results.infos.forEach((info, index) => {
+                infos.forEach((info, index) => {
                   comment += `<details>\n`;
                   comment += `<summary><strong>${index + 1}. ${info.rule_name.trim()}</strong> (${info.rule_id})</summary>\n\n`;
-                  comment += `**File:** \`${info.file.trim()}\`${info.line > 0 ? ` (Line ${info.line})` : ''}\n\n`;
-                  comment += `**Message:** ${info.message.trim()}\n\n`;
+                  comment += `- **File:** \`${info.file.trim()}\`${info.line > 0 ? ` (line ${info.line})` : ''}\n`;
+                  comment += `- **Message:** ${info.message.trim()}\n`;
                   if (info.details) {
-                    comment += `**Details:** ${info.details.trim()}\n`;
+                    comment += `- **Details:** ${info.details.trim()}\n`;
                   }
                   comment += '\n</details>\n\n';
                 });
@@ -169,9 +143,9 @@ jobs:
             }
 
             // Add timestamp
-            comment += `\n---\n`;
-            comment += `🕐 *Analysis performed at: ${results.timestamp}*\n`;
-            comment += `📌 *Commit: ${results.commit.substring(0, 7)}*\n`;
+            comment += `---\n`;
+            comment += `*Analysis performed at: ${results.timestamp}*\n`;
+            comment += `*Commit: ${results.commit}*\n`;
 
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
