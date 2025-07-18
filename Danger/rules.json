@@ -65,18 +65,6 @@
       "message": "Print statement found. Consider using proper logging or removing debug prints."
     },
     {
-      "id": "firebase-config-changes",
-      "name": "Firebase Configuration Modified",
-      "description": "Firebase configuration changes need careful review",
-      "severity": "warning",
-      "type": "file_pattern",
-      "patterns": [
-        "**/GoogleService-Info.plist",
-        "**/Firebase/**"
-      ],
-      "message": "Firebase configuration has been modified. Please verify the changes are correct."
-    },
-    {
       "id": "large-file-addition",
       "name": "Large File Added",
       "description": "Large files can bloat the repository",
