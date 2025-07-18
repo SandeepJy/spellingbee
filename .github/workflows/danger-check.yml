@@ -175,7 +175,6 @@ jobs:
             });
 
             const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
               comment.body.includes('🔍 Danger Analysis Results')
             );
 
