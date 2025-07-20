@@ -11,9 +11,8 @@ validate_filenames() {
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
         
-        echo "Sandeep check file $file"
         # Check if filename contains spaces
-        if [[ "$file" == *-* ]]; then
+        if [[ "$file" =~ [[:space:]] ]]; then
             add_result "error" "filename_spaces" "Filename Contains Spaces" \
                 "Filenames should not contain spaces" \
                 "File: $file" "$file" "0"

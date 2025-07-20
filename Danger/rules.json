@@ -16,14 +16,9 @@
       "name": "Large Pull Request",
       "description": "Large PRs are harder to review. Consider breaking them into smaller ones.",
       "severity": "warning",
-      "type": "pr_size",
+      "type": "diff_size",
       "max_lines": 500,
-      "exclude_files": [
-        "**/Pods/**",
-        "**/package-lock.json",
-        "**/yarn.lock",
-        "**/Podfile.lock"
-      ],
+      "count_type": "total",
       "message": "This PR is quite large. Consider breaking it into smaller, more focused PRs."
     },
     {
@@ -107,6 +102,23 @@
         "**/Podfile.lock"
       ],
       "message": "Podfile has been modified. Please ensure all dependency changes are intentional."
+    },
+    {
+      "id": "swift-sources-changelog-required",
+      "name": "Swift Sources Modified - Changelog Required",
+      "description": "When Swift source files are modified, the changelog should be updated",
+      "severity": "warning",
+      "type": "dependent_file",
+      "source_patterns": [
+        "*.swift"
+      ],
+      "source_folders": [
+        "SpellingBee/Sources/"
+      ],
+      "dependent_files": [
+        "changelog.md"
+      ],
+      "message": "Swift source files have been modified. Please update the changelog to document your changes."
     }
   ],
   "settings": {
