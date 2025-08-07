@@ -12,6 +12,48 @@
       "message": "Entitlements file has been modified. Please ensure all changes are necessary and secure."
     },
     {
+      "id": "release-branch-podfile-lock",
+      "name": "Podfile.lock Required for Release",
+      "description": "Release branches must include Podfile.lock changes",
+      "severity": "error",
+      "type": "dependent_file",
+      "target_branch": "release/*",
+      "source_patterns": [
+        "**/Podfile"
+      ],
+      "dependent_files": [
+        "**/Podfile.lock"
+      ],
+      "message": "Podfile changed but Podfile.lock not updated. Run 'pod install' before merging to release."
+    },
+    {
+      "id": "master-branch-naming",
+      "name": "Master Branch Naming Convention",
+      "description": "Branches merging to master must follow naming conventions",
+      "severity": "error",
+      "type": "branch_naming",
+      "target_branch": "main",
+      "allowed_patterns": [
+        "feature/*",
+        "bugfix/*"
+      ],
+      "message": "Branch name doesn't follow conventions for merging to master. Use feature/* or bugfix/* pattern."
+    },
+    {
+      "id": "release-branch-naming",
+      "name": "Release Branch Naming Convention",
+      "description": "Branches merging to release must follow naming conventions",
+      "severity": "error",
+      "type": "branch_naming",
+      "target_branch": "release/*",
+      "allowed_patterns": [
+        "bugfix/*",
+        "hotfix/*",
+        "release/*"
+      ],
+      "message": "Only bugfix/*, hotfix/*, or release/* branches can be merged to release branches."
+    },
+    {
       "id": "force-unwrap-usage",
       "name": "Force Unwrapping Detected",
       "description": "Force unwrapping can cause crashes and should be avoided",
@@ -64,18 +106,6 @@
         "**/*.swift"
       ],
       "message": "TODO/FIXME comment added. Consider creating a ticket to track this work."
-    },
-    {
-      "id": "podfile-changes",
-      "name": "Podfile Modified",
-      "description": "Dependency changes should be reviewed",
-      "severity": "warning",
-      "type": "file_pattern",
-      "patterns": [
-        "**/Podfile",
-        "**/Podfile.lock"
-      ],
-      "message": "Podfile has been modified. Please ensure all dependency changes are intentional."
     },
     {
       "id": "swift-sources-changelog-required",
