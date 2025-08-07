@@ -1,0 +1,202 @@
+name: Danger Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  danger-analysis:
+    name: Run Danger Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper git diff
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+      - name: Install dependencies
+        run: |
+          # Install jq if not already available
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+
+      - name: Run Danger Analysis
+        id: danger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTIONS: true
+          LOCAL_MODE: false
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Make the script executable
+          chmod +x run-danger.sh
+
+          # Run the danger system
+          ./run-danger.sh ${{ github.base_ref }}
+
+          echo "analysis_exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload analysis results
+        id: upload-results
+        uses: actions/upload-artifact@v4
+        with:
+          name: danger-results
+          path: Danger/danger-results.json
+          retention-days: 7
+
+      - name: Post PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GEN_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // Read the results file
+            const resultsPath = 'Danger/danger-results.json';
+            let results;
+
+            try {
+              const fileContent = fs.readFileSync(resultsPath, 'utf8');
+              results = JSON.parse(fileContent);
+            } catch (error) {
+              console.error('Error reading results file:', error);
+              return;
+            }
+
+            // Extract data from results
+            const errors = results.results.errors || [];
+            const warnings = results.results.warnings || [];
+            const infos = results.results.infos || [];
+            const summary = results.summary;
+
+            // Build the comment
+            let comment = '## 🔍 Danger Analysis Results\n\n';
+
+            // Add summary
+            comment += `### Summary\n`;
+            comment += `- ❌ **Errors:** ${summary.error_count}\n`;
+            comment += `- ⚠️ **Warnings:** ${summary.warning_count}\n`;
+            comment += `- ℹ️ **Info:** ${summary.info_count}\n\n`;
+
+            // Add status
+            if (summary.passed) {
+              comment += '✅ **Status:** All checks passed!\n\n';
+            } else {
+              comment += '❌ **Status:** Issues found that need attention.\n\n';
+            }
+
+            // Format issue for display
+            const formatIssue = (issue) => {
+              let issueText = `- **${issue.rule_name.trim()}** (${issue.rule_id})\n`;
+              issueText += `  - ${issue.message.trim()}\n`;
+              issueText += `  - File: \`${issue.file.trim()}\``;
+              if (issue.line > 0) {
+                issueText += ` (Line: ${issue.line})`;
+              }
+              issueText += '\n';
+              if (issue.details && issue.details.trim()) {
+                issueText += `  - Details: ${issue.details.trim()}\n`;
+              }
+              return issueText;
+            };
+
+            // Add errors (always show all)
+            if (errors.length > 0) {
+              comment += '### ❌ Errors\n\n';
+              errors.forEach(error => {
+                comment += formatIssue(error);
+              });
+              comment += '\n';
+            }
+
+            // Handle warnings and info
+            const nonErrors = [...warnings, ...infos];
+            const totalNonErrors = warnings.length + infos.length;
+
+            if (totalNonErrors > 0) {
+              if (warnings.length > 0) {
+                comment += '### ⚠️ Warnings\n\n';
+                const warningsToShow = totalNonErrors > 20 ? warnings.slice(0, Math.min(warnings.length, 20)) : warnings;
+                warningsToShow.forEach(warning => {
+                  comment += formatIssue(warning);
+                });
+                if (totalNonErrors > 20 && warningsToShow.length < warnings.length) {
+                  comment += `\n*... and ${warnings.length - warningsToShow.length} more warnings*\n`;
+                }
+                comment += '\n';
+              }
+              
+              if (infos.length > 0 && totalNonErrors <= 20) {
+                comment += '### ℹ️ Info\n\n';
+                infos.forEach(info => {
+                  comment += formatIssue(info);
+                });
+                comment += '\n';
+              } else if (infos.length > 0 && totalNonErrors > 20) {
+                const remainingSlots = Math.max(0, 20 - warnings.length);
+                if (remainingSlots > 0) {
+                  comment += '### ℹ️ Info\n\n';
+                  const infosToShow = infos.slice(0, remainingSlots);
+                  infosToShow.forEach(info => {
+                    comment += formatIssue(info);
+                  });
+                  if (infosToShow.length < infos.length) {
+                    comment += `\n*... and ${infos.length - infosToShow.length} more info messages*\n`;
+                  }
+                  comment += '\n';
+                }
+              }
+              
+              // Add link to full results if there are more than 20 non-error issues
+              if (totalNonErrors > 20) {
+                const artifactUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+                comment += `\n📎 **[View full results](${artifactUrl})** - Total of ${totalNonErrors} warnings and info messages. Download the \`danger-results\` artifact for complete details.\n`;
+              }
+            }
+
+            // Add timestamp
+            comment += `\n---\n`;
+            comment += `*Analysis performed at: ${results.timestamp}*\n`;
+            comment += `*Commit: ${results.commit.substring(0, 7)}*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.body.includes('🔍 Danger Analysis Results')
+            );
+
+            // Create or update comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Check if PR should be blocked
+        if: steps.danger.outputs.analysis_exit_code != '0'
+        run: |
+          echo "❌ Danger checks failed! Please fix the issues before merging."
+          exit 1
