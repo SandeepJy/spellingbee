@@ -15,7 +15,7 @@ SCRIPTS_FULL_PATH="${SCRIPTS_DIR}/scripts"
 LOCAL_MODE="${LOCAL_MODE:-true}"
 CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-
+BASE_BRANCH="${1:-main}"
 
 # Colors
 RED='\033[0;31m'
@@ -77,7 +77,7 @@ echo -e "${BLUE}Running CodeGuardian analysis...${NC}"
 echo ""
 
 if [[ "${LOCAL_MODE}" == "true" ]]; then
-    "$SCRIPTS_FULL_PATH/run-codeguardian-local.sh"
+    "$SCRIPTS_FULL_PATH/run-codeguardian-local.sh" ${BASE_BRANCH}
 else
     # CI mode
     "${SCRIPTS_FULL_PATH}/codeguardian-analyze.sh" \
