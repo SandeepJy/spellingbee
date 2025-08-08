@@ -53,7 +53,7 @@ jobs:
           # Make the script executable 
           chmod +x run-codeguardian.sh
           # Run the CodeGuardian systen
-          /run-codeguardian.sh stf github.base_ref)
+          ./run-codeguardian.sh
           echo "analysis_exit_codes$?"> $GITHUB_OUTPUT
         continue-on-error: true
 
