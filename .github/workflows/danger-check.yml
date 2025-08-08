@@ -64,4 +64,4 @@ jobs:
         with:
           name: codeguardian-results
           path: CodeGuardian/codeguardian-results.json
-          retention-days: 6
+          retention-days: 7
