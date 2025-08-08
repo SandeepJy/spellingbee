@@ -17,7 +17,7 @@ jobs:
 
       - name: Fetch base branch
         run: |
-          git fetch origin S{{ githu.base_ref}}:${{ github.base_ref }}
+          git fetch origin S{{ githu.base_ref }}:${{ github.base_ref }}
 
       - name: Extract CodeGuardian Version
         id: extract-version
@@ -41,21 +41,21 @@ jobs:
         with:
           repository: TD-Universe/CodeGuardian
           ref: $(fenv.CODEGUARDIANVERSION))
-          path: CodeGuardian/CodeGuardian-$ff env. CODEGUARDIAN_VERSION ))
+          path: CodeGuardian/CodeGuardian-${{ env. CODEGUARDIAN_VERSION }}
 
       - name: Run CodeGuardian Analysis
         id: CodeGuardian
         env:
-          GITHUB_TOKEN: st secrets. GITHUB_TOKEN "
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTIONS: true
           LOCAL_MODE: false
-          PR_NUMBER: S(fgithub.event.pull_request.number))
+          PR_NUMBER: S({ github.event.pull_request.number }}
         run: |
           # Make the script executable 
           chnod +x run-codeguardian.sh
           # Run the CodeGuardian systen
           /run-codeguardian.sh stf github.base_ref)
-          echo "analysis_exit_codes$7"> $GITHUB_OUTPUT
+          echo "analysis_exit_codes$?"> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Upload analysis results
@@ -64,4 +64,4 @@ jobs:
         with:
           name: codeguardian-results
           path: CodeGuardian/codeguardian-results.json
-          retention-eays: 7
+          retention-days: 7
