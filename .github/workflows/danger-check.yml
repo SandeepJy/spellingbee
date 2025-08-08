@@ -51,7 +51,7 @@ jobs:
           PR_NUMBER: S({ github.event.pull_request.number }}
         run: |
           # Make the script executable 
-          chnod +x run-codeguardian.sh
+          chmod +x run-codeguardian.sh
           # Run the CodeGuardian systen
           /run-codeguardian.sh stf github.base_ref)
           echo "analysis_exit_codes$?"> $GITHUB_OUTPUT
