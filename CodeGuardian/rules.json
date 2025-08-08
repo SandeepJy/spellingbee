@@ -32,7 +32,7 @@
       "description": "Branches merging to master must follow naming conventions",
       "severity": "error",
       "type": "branch_naming",
-      "target_branch": "main",
+      "target_branches": ["main"],
       "allowed_patterns": [
         "feature/*",
         "bugfix/*"
@@ -45,7 +45,7 @@
       "description": "Branches merging to release must follow naming conventions",
       "severity": "error",
       "type": "branch_naming",
-      "target_branch": "release/*",
+      "target_branches": ["release/*"],
       "allowed_patterns": [
         "bugfix/*",
         "hotfix/*",
@@ -60,8 +60,8 @@
       "severity": "error",
       "type": "code_pattern",
       "patterns": [
-         "\\s\\w+!$",
-         "\\s\\w+!\\s"
+         "\\b\\w+!\\s*[\\.,;\\)\\]\\}]",
+         "\\b\\w+!\\s*$"
       ],
       "file_patterns": [
         "**/*.swift"
