@@ -38,9 +38,9 @@ jobs:
       - name: Clone core scripts
         uses: actions/checkout@v4
         with:
-          repository: TD-Universe/CodeGuardian
-          ref: $(fenv.CODEGUARDIANVERSION))
-          path: CodeGuardian/CodeGuardian-${{ env. CODEGUARDIAN_VERSION }}
+          repository: SandeepJy/CodeGuardian
+          ref: $({ env.CODEGUARDIANVERSION }}
+          path: CodeGuardian/CodeGuardian-${{ env.CODEGUARDIAN_VERSION }}
 
       - name: Run CodeGuardian Analysis
         id: CodeGuardian
