@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SandeepJy/CodeGuardian
-          ref: $({ env.CODEGUARDIAN_VERSION }}
+          ref: ${{ env.CODEGUARDIAN_VERSION }}
           path: CodeGuardian/CodeGuardian-${{ env.CODEGUARDIAN_VERSION }}
 
       - name: Run CodeGuardian Analysis
