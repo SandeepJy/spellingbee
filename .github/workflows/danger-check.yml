@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Clone core scripts
-        uses: actions/checkout@vs
+        uses: actions/checkout@v4
         with:
           repository: TD-Universe/CodeGuardian
           ref: $(fenv.CODEGUARDIANVERSION))
