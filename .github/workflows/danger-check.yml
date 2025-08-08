@@ -53,6 +53,7 @@ jobs:
           # Make the script executable 
           chmod +x run-codeguardian.sh
           # Run the CodeGuardian systen
+          echo "BASE REF IS: ${{ github.base_ref }}"
           ./run-codeguardian.sh ${{ github.base_ref }}
           echo "analysis_exit_codes$?"> $GITHUB_OUTPUT
         continue-on-error: true
