@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-CODEGUARDIAN_VERSION="${CODEGUARDIAN_VERSION:-main}"
+CODEGUARDIAN_VERSION="main"
 CODEGUARDIAN_REPO_NAME="CodeGuardian"
 CODEGUARDIAN_REPO="https://github.com/SandeepJy/${CODEGUARDIAN_REPO_NAME}"
 
