@@ -5,7 +5,7 @@ import Firebase
 import FirebaseFirestore
 import FirebaseStorage
 import AVFoundation
-
+import Fake
 
 class GameManager: ObservableObject {
     @Published var users: [SpellGameUser] = []  // List of available users

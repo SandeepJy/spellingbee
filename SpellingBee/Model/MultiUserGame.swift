@@ -1,4 +1,6 @@
 import SwiftUI
+
+//modded1
 // Model representing a multiplayer game
 struct MultiUserGame: Identifiable, Codable, Hashable {
     let id: UUID // Unique identifier for each game
