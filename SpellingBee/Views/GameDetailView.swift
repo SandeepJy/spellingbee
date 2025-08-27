@@ -1,6 +1,6 @@
 // GameDetailsView.swift
 import SwiftUI
-
+import UIKit
 
 struct RecordingDetails {
     var word: String
