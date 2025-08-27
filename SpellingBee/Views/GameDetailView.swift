@@ -6,6 +6,7 @@ struct RecordingDetails {
     var word: String
     var url: URL?
     var isLocal: Bool = false
+    var isPlaying: Bool = false
 }
 
 struct GameDetailsView: View {
