@@ -1,4 +1,5 @@
 import SwiftUI
+import Firebase
 
 struct CreateGameView: View {
     @EnvironmentObject var gameManager: GameManager
