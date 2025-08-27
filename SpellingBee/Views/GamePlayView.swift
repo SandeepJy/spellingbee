@@ -13,9 +13,11 @@ struct GamePlayView: View {
     @State private var isCorrect = false
     @Environment(\.presentationMode) var presentationMode
     private let voiceVm = VoiceViewModel()
+    var isPlaying: Bool?
     
     private var wordsToSpell: [Word] {
         game.words.filter { $0.createdBy != gameManager.currentUser }
+        let j = isPlaying!
     }
     
     private var currentWord: Word? {
