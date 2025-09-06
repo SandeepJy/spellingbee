@@ -2,6 +2,7 @@
 import SwiftUI
 import UIKit
 
+import shared
 struct RecordingDetails {
     var word: String
     var url: URL?
@@ -9,7 +10,7 @@ struct RecordingDetails {
 }
 
 struct GameDetailsView: View {
-    @ObservedObject var gameManager: GameManager
+    @ObservedObject var gameManager: GameManagerBridge
     let game: MultiUserGame
     @State private var recordings: [RecordingDetails] = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
     @State private var currentWordIndex = 0
@@ -93,7 +94,7 @@ struct GameDetailsView: View {
 
 // Recording Controls
 struct RecordingControls: View {
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var gameManager: GameManagerBridge
     @Binding var isRecording: Bool
     @Binding var recording: RecordingDetails
     let canRecord: Bool

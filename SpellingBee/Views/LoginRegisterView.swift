@@ -1,4 +1,5 @@
 import SwiftUI
+import shared
 
 
 struct LoginRegisterView: View {

@@ -1,7 +1,9 @@
 import SwiftUI
+import shared
+
 
 struct CreateGameView: View {
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var gameManager: GameManagerBridge
     @Binding var showCreateGameView: Bool
     @State private var selectedUsers = Set<SpellGameUser>()
     

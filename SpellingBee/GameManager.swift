@@ -5,7 +5,8 @@ import Firebase
 import FirebaseFirestore
 import FirebaseStorage
 import AVFoundation
-import Fake
+import shared
+    
 
 class GameManager: ObservableObject {
     @Published var users: [SpellGameUser] = []  // List of available users
@@ -14,6 +15,8 @@ class GameManager: ObservableObject {
     private var db = Firestore.firestore()
     private var storage = Storage.storage()
     private var str:String = ""
+    let gameManager = GameManagerBridge()
+   
     
     init() {
         loadUsers()

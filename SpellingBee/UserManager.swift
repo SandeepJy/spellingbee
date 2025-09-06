@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 import Firebase
 import FirebaseAuth
-
+import shared
 
 
 class UserManager: ObservableObject {

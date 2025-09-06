@@ -1,7 +1,8 @@
 import SwiftUI
+import shared
 
 struct GameSetupView: View {
-    @ObservedObject var gameManager: GameManager
+    @ObservedObject var gameManager: GameManagerBridge
     let game: MultiUserGame
     @Binding var recordings: [RecordingDetails]
     @Binding var currentWordIndex: Int
