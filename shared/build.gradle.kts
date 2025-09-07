@@ -33,6 +33,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
                 
                 // Firebase KMP libraries
+                implementation("dev.gitlive:firebase-app:1.10.4")
                 implementation("dev.gitlive:firebase-auth:1.10.4")
                 implementation("dev.gitlive:firebase-firestore:1.10.4")
                 implementation("dev.gitlive:firebase-storage:1.10.4")

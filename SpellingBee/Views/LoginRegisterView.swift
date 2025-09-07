@@ -3,13 +3,11 @@ import shared
 
 
 struct LoginRegisterView: View {
-    @EnvironmentObject var userManager: UserManager
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     @State private var isRegistering = false
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var errorMessage: String?
     
     var body: some View {
         VStack(spacing: 30) {
@@ -38,9 +36,14 @@ struct LoginRegisterView: View {
                 SecureField("Password", text: $password)
                     .textFieldStyle(ModernTextFieldStyle())
                 
-                if let errorMessage = errorMessage {
+                if let errorMessage = viewModel.authError {
                     Text(errorMessage)
                         .foregroundColor(.red)
+                        .font(.caption)
+                }
+                
+                if viewModel.isAuthLoading {
+                    ProgressView("Please wait...")
                         .font(.caption)
                 }
             }
@@ -51,9 +54,10 @@ struct LoginRegisterView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(viewModel.isAuthLoading ? Color.gray : Color.blue)
                     .cornerRadius(12)
             }
+            .disabled(viewModel.isAuthLoading)
             
             // Social Login Buttons
             VStack(spacing: 15) {
@@ -75,22 +79,9 @@ struct LoginRegisterView: View {
     
     private func handleAuth() {
         if isRegistering {
-            userManager.register(username: username, email: email, password: password) { result in
-                handleAuthResult(result)
-            }
+            viewModel.register(username: username, email: email, password: password)
         } else {
-            userManager.login(email: email, password: password) { result in
-                handleAuthResult(result)
-            }
-        }
-    }
-    
-    private func handleAuthResult(_ result: Result<SpellGameUser, Error>) {
-        switch result {
-        case .success(let user):
-            gameManager.setCurrentUser(user)
-        case .failure(let error):
-            errorMessage = error.localizedDescription
+            viewModel.login(email: email, password: password)
         }
     }
 }

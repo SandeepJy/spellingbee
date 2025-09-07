@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "644067864938",
+    "project_id": "spellingbee-20c3f",
+    "storage_bucket": "spellingbee-20c3f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:644067864938:android:adba48e4f5b30e863f3513",
+        "android_client_info": {
+          "package_name": "com.sandeep.spellingbee"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUGhtQq_majDPzMSM6va-nBbhWp_JNEcQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

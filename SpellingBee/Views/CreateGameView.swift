@@ -3,7 +3,7 @@ import shared
 
 
 struct CreateGameView: View {
-    @EnvironmentObject var gameManager: GameManagerBridge
+    @EnvironmentObject var viewModel: AppViewModel
     @Binding var showCreateGameView: Bool
     @State private var selectedUsers = Set<SpellGameUser>()
     
@@ -13,7 +13,7 @@ struct CreateGameView: View {
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.primary)
             
-            List(gameManager.users.filter { $0.id != gameManager.currentUser?.id }, id: \.self, selection: $selectedUsers) { user in
+            List(viewModel.users.filter { $0.id != viewModel.currentUser?.id }, id: \.self, selection: $selectedUsers) { user in
                 Text(user.username)
                     .foregroundColor(.primary)
             }
@@ -36,10 +36,8 @@ struct CreateGameView: View {
     }
     
     private func createGame() {
-        if let currentUser = gameManager.currentUser {
-            var participants = selectedUsers.map { $0 }
-            participants.append(currentUser)
-            gameManager.createGame(creator: currentUser, participants: Set(participants))
+        if let currentUser = viewModel.currentUser {
+            viewModel.createGame(creator: currentUser, participants: selectedUsers)
             showCreateGameView = false
         }
     }

@@ -10,7 +10,7 @@ struct RecordingDetails {
 }
 
 struct GameDetailsView: View {
-    @ObservedObject var gameManager: GameManagerBridge
+    @EnvironmentObject var viewModel: AppViewModel
     let game: MultiUserGame
     @State private var recordings: [RecordingDetails] = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
     @State private var currentWordIndex = 0
@@ -21,15 +21,15 @@ struct GameDetailsView: View {
     var body: some View {
         if game.isStarted {
             GamePlayView(game: game)
-                .environmentObject(gameManager)
+                .environmentObject(viewModel)
         } else {
             GameSetupView(
-                gameManager: gameManager,
                 game: game,
                 recordings: $recordings,
                 currentWordIndex: $currentWordIndex,
                 isRecording: $isRecording
             )
+            .environmentObject(viewModel)
             .onAppear(perform: loadExistingWords)
         }
     }
@@ -49,40 +49,41 @@ struct GameDetailsView: View {
         for recording in recordings {
             if let url = recording.url, recording.isLocal {
                 dispatchGroup.enter()
-                gameManager.uploadAudio(gameID: game.id, url: url, word: recording.word) { uploadedUrl in
-                    if let uploadedUrl = uploadedUrl, let currentUser = self.gameManager.currentUser {
+                // Convert URL to Data
+                if let audioData = try? Data(contentsOf: url) {
+                    viewModel.uploadAudio(gameId: game.id, word: recording.word, audioData: audioData)
+                    
+                    if let currentUser = viewModel.currentUser {
                         let newWord = Word(
-                            word: recording.word,
-                            soundURL: URL(string: uploadedUrl),
-                            level: 1,
-                            createdBy: currentUser,
-                            game: self.game
+                            text: recording.word,
+                            audioUrl: nil, // Will be set after upload
+                            recordedBy: currentUser.id
                         )
                         words.append(newWord)
                     }
-                    dispatchGroup.leave()
                 }
+                dispatchGroup.leave()
             }
         }
         
         dispatchGroup.notify(queue: .main) {
-            self.gameManager.addWords(to: self.game.id, words: words)
+            self.viewModel.addWords(to: self.game.id, words: words)
             self.presentationMode.wrappedValue.dismiss()
         }
     }
     
     private func loadExistingWords() {
-        guard let currentUser = gameManager.currentUser else { return }
+        guard let currentUser = viewModel.currentUser else { return }
         
         // Reset recordings
         recordings = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
         
         // Load words from game
-        let userWords = game.words.filter { $0.createdBy == currentUser }
+        let userWords = game.words.filter { $0.recordedBy == currentUser.id }
         for (index, word) in userWords.enumerated() where index < 5 {
             recordings[index] = RecordingDetails(
-                word: word.word,
-                url: word.soundURL,
+                word: word.text,
+                url: word.audioUrl != nil ? URL(string: word.audioUrl!) : nil,
                 isLocal: false
             )
         }
@@ -94,7 +95,7 @@ struct GameDetailsView: View {
 
 // Recording Controls
 struct RecordingControls: View {
-    @EnvironmentObject var gameManager: GameManagerBridge
+    @EnvironmentObject var viewModel: AppViewModel
     @Binding var isRecording: Bool
     @Binding var recording: RecordingDetails
     let canRecord: Bool
@@ -171,9 +172,12 @@ struct RecordingControls: View {
                 voiceVm.startPlaying(url: url) {}
             } else {
                 // Download from Firebase if not local
-                gameManager.downloadAudio(gameID: game.id, word: recording.word) { downloadedUrl in
-                    if let downloadedUrl = downloadedUrl {
-                        voiceVm.startPlaying(url: downloadedUrl) {}
+                viewModel.downloadAudio(gameId: game.id, word: recording.word) { audioData in
+                    if let audioData = audioData {
+                        // Save to temporary file and play
+                        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("temp_\(recording.word).m4a")
+                        try? audioData.write(to: tempURL)
+                        voiceVm.startPlaying(url: tempURL) {}
                     }
                 }
             }

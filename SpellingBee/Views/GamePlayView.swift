@@ -2,7 +2,7 @@ import SwiftUI
 import shared
 
 struct GamePlayView: View {
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     let game: MultiUserGame
     @State private var currentWordIndex = 0
     @State private var userInput = ""
@@ -16,7 +16,7 @@ struct GamePlayView: View {
     private let voiceVm = VoiceViewModel()
     
     private var wordsToSpell: [Word] {
-        game.words.filter { $0.createdBy != gameManager.currentUser }
+        game.words.filter { $0.recordedBy != viewModel.currentUser?.id }
     }
     
     private var currentWord: Word? {
@@ -128,12 +128,15 @@ struct GamePlayView: View {
     }
     
     private func playWord() {
-        guard let word = currentWord, let url = word.soundURL else { return }
+        guard let word = currentWord else { return }
         
         isPlaying = true
-        gameManager.downloadAudio(gameID: game.id, word: word.word) { downloadedUrl in
-            if let downloadedUrl = downloadedUrl {
-                voiceVm.startPlaying(url: downloadedUrl) {
+        viewModel.downloadAudio(gameId: game.id, word: word.text) { audioData in
+            if let audioData = audioData {
+                // Save to temporary file and play
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("temp_\(word.text).m4a")
+                try? audioData.write(to: tempURL)
+                voiceVm.startPlaying(url: tempURL) {
                     DispatchQueue.main.async {
                         isPlaying = false
                         startTimer()
@@ -160,7 +163,7 @@ struct GamePlayView: View {
         guard let word = currentWord else { return }
         timer?.invalidate()
         
-        isCorrect = userInput.lowercased().trimmingCharacters(in: .whitespaces) == word.word.lowercased()
+        isCorrect = userInput.lowercased().trimmingCharacters(in: .whitespaces) == word.text.lowercased()
         score += calculatePoints()
         showResult = true
         

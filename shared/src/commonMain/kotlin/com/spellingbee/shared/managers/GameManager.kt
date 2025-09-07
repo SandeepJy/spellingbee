@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 class GameManager {
     private val db = Firebase.firestore
     private val storage = Firebase.storage
+    
+    // Managers for different concerns
+    val authManager = AuthManager()
+    val storageManager = StorageManager()
 
     private val _users = MutableStateFlow<List<SpellGameUser>>(emptyList())
     val users: StateFlow<List<SpellGameUser>> = _users.asStateFlow()
@@ -22,6 +26,17 @@ class GameManager {
 
     private val _games = MutableStateFlow<List<MultiUserGame>>(emptyList())
     val games: StateFlow<List<MultiUserGame>> = _games.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    
+    init {
+        // Note: loadUsers and loadGames are called from iOS wrappers
+        // to avoid suspend functions in init
+    }
 
     suspend fun loadUsers() {
         try {
@@ -40,6 +55,37 @@ class GameManager {
                     }
         } catch (e: Exception) {
             println("Error loading users: ${e.message}")
+        }
+    }
+    
+    suspend fun loadGames() {
+        try {
+            val snapshot = db.collection("games").get()
+            _games.value = snapshot.documents.mapNotNull { doc ->
+                try {
+                    MultiUserGame(
+                        id = doc.get("id") as? String ?: "",
+                        creatorId = doc.get("creatorId") as? String ?: "",
+                        participantIds = (doc.get("participantIds") as? List<*>)?.mapNotNull { it as? String }?.toSet() ?: emptySet(),
+                        words = (doc.get("words") as? List<*>)?.mapNotNull { wordData ->
+                            val wordMap = wordData as? Map<*, *>
+                            if (wordMap != null) {
+                                Word(
+                                    text = wordMap["text"] as? String ?: "",
+                                    audioUrl = wordMap["audioUrl"] as? String,
+                                    recordedBy = wordMap["recordedBy"] as? String
+                                )
+                            } else null
+                        } ?: emptyList(),
+                        creationDate = (doc.get("creationDate") as? Long) ?: 0L,
+                        isStarted = (doc.get("isStarted") as? Boolean) ?: false
+                    )
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            println("Error loading games: ${e.message}")
         }
     }
 
@@ -117,6 +163,45 @@ class GameManager {
 
     fun getUser(id: String): SpellGameUser? {
         return _users.value.firstOrNull { it.id == id }
+    }
+    
+    // Audio storage methods
+    suspend fun uploadAudio(gameId: String, word: String, audioData: ByteArray): Result<String> {
+        return storageManager.uploadAudio(gameId, word, audioData)
+    }
+    
+    suspend fun downloadAudio(gameId: String, word: String): Result<ByteArray> {
+        return storageManager.downloadAudio(gameId, word)
+    }
+    
+    suspend fun deleteAudio(gameId: String, word: String): Result<Unit> {
+        return storageManager.deleteAudio(gameId, word)
+    }
+    
+    // Game management methods
+    suspend fun startGame(gameId: String): Boolean {
+        val game = _games.value.firstOrNull { it.id == gameId } ?: return false
+        val updatedGame = game.copy(isStarted = true)
+        _games.value = _games.value.map { if (it.id == gameId) updatedGame else it }
+        saveGame(updatedGame)
+        return true
+    }
+    
+    // Utility methods
+    fun getParticipantNames(game: MultiUserGame): List<String> {
+        return game.participantIds.mapNotNull { participantId ->
+            getUser(participantId)?.username
+        }
+    }
+    
+    fun getCreatorName(game: MultiUserGame): String? {
+        return getUser(game.creatorId)?.username
+    }
+    
+    fun clearError() {
+        _error.value = null
+        authManager.clearError()
+        storageManager.clearError()
     }
 }
 

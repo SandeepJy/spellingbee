@@ -1,15 +1,25 @@
 import SwiftUI
 import AVFoundation
 import Combine
-import Firebase
-import FirebaseAuth
-import FirebaseFirestore
-import FirebaseStorage
+import shared
+
+// Extension to make MultiUserGame conform to Identifiable
+extension MultiUserGame: Identifiable {
+    // The id property is already available from the KMP model
+}
 
 
 struct MainView: View {
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     @State private var showCreateGameView = false
+    
+    // Computed property to filter games for better performance
+    private var userGames: [MultiUserGame] {
+        guard let currentUserId = viewModel.currentUser?.id else { return [] }
+        return viewModel.games.filter { game in
+            game.creatorId == currentUserId || game.participantIds.contains(currentUserId)
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -28,7 +38,7 @@ struct MainView: View {
                     }
                     .padding(.horizontal)
                     
-                    Text("Welcome, \(gameManager.currentUser?.username ?? "User")!")
+                    Text("Welcome, \(viewModel.currentUser?.username ?? "User")!")
                         .font(.title2)
                         .foregroundColor(.secondary)
                     
@@ -52,15 +62,15 @@ struct MainView: View {
                     }
                     .sheet(isPresented: $showCreateGameView) {
                         CreateGameView(showCreateGameView: $showCreateGameView)
-                            .environmentObject(gameManager)
+                            .environmentObject(viewModel)
                     }
                     .padding(.horizontal)
                     
                     // Games Display
                     VStack(spacing: 15) {
-                        ForEach(gameManager.games.filter { $0.creator == gameManager.currentUser || $0.participants.contains(where: { $0 == gameManager.currentUser }) }) { game in
+                        ForEach(userGames) { game in
                             GameCardView(game: game)
-                                .environmentObject(gameManager)
+                                .environmentObject(viewModel)
                         }
                     }
                     .padding(.horizontal)
@@ -83,15 +93,15 @@ struct MainView: View {
 
 // Game Card View
 struct GameCardView: View {
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     let game: MultiUserGame
     
     var body: some View {
-        NavigationLink(destination: GameDetailsView(gameManager: gameManager, game: game)) {
+        NavigationLink(destination: GameDetailsView(game: game)) {
             VStack(alignment: .leading, spacing: 10) {
                 // Header
                 HStack {
-                    Text("Game by \(gameManager.getCreatorName(for: game) ?? "")")
+                    Text("Game by \(viewModel.getCreatorName(for: game) ?? "")")
                         .font(.headline)
                         .foregroundColor(.primary)
                     Spacer()
@@ -102,13 +112,13 @@ struct GameCardView: View {
                 HStack {
                     Image(systemName: "person.2.fill")
                         .foregroundColor(.gray)
-                    Text("\(game.participants.count) Players")
+                    Text("\(game.participantIds.count) Players")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
                     Spacer()
                     
-                    Text(timeAgoSince(date: game.creationDate))
+                    Text(timeAgoSince(date: Date(timeIntervalSince1970: Double(game.creationDate) / 1000)))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -119,8 +129,10 @@ struct GameCardView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    ForEach(Array(game.participants), id: \.self) { participant in
-                        WordProgressRow(participant: participant, game: game)
+                    ForEach(Array(game.participantIds), id: \.self) { participantId in
+                        if let participant = viewModel.getUser(by: participantId) {
+                            WordProgressRow(participant: participant, game: game)
+                        }
                     }
                 }
             }
@@ -184,14 +196,14 @@ struct WordProgressRow: View {
     }
     
     private var wordCount: Int {
-        game.words.filter { $0.createdBy.id == participant.id }.count
+        game.words.filter { $0.recordedBy == participant.id }.count
     }
 }
 
 struct GameSection: View {
     let title: String
     let games: [MultiUserGame]
-    let gameManager: GameManager = .init()
+    @EnvironmentObject var viewModel: AppViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -201,8 +213,8 @@ struct GameSection: View {
             
             ScrollView {
                 ForEach(games) { game in
-                    NavigationLink(destination: GameDetailsView(gameManager: gameManager, game: game)) {
-                        Text("Game - Created by \(game.creator.username) \(timeAgoSince(date: game.creationDate)) ago")
+                    NavigationLink(destination: GameDetailsView(game: game)) {
+                        Text("Game - Created by \(viewModel.getCreatorName(for: game) ?? "Unknown") \(timeAgoSince(date: Date(timeIntervalSince1970: Double(game.creationDate) / 1000))) ago")
                             .foregroundColor(.blue)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -224,20 +236,17 @@ struct GameSection: View {
 
 
 struct ContentView: View {
-    @StateObject private var gameManager = GameManager()
-    @StateObject private var userManager = UserManager()
+    @StateObject private var viewModel = AppViewModel()
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         NavigationView {
-            if gameManager.currentUser != nil {
+            if viewModel.currentUser != nil {
                 MainView()
-                    .environmentObject(userManager)
-                    .environmentObject(gameManager)
+                    .environmentObject(viewModel)
             } else {
                 LoginRegisterView()
-                    .environmentObject(userManager)
-                    .environmentObject(gameManager)
+                    .environmentObject(viewModel)
             }
         }
         .preferredColorScheme(colorScheme) // Adapts to system dark/light mode
@@ -265,7 +274,7 @@ struct ParticipantRow: View {
     }
     
     private var wordCount: Int {
-        game.words.filter { $0.createdBy == participant }.count
+        game.words.filter { $0.recordedBy == participant?.id }.count
     }
 }
 

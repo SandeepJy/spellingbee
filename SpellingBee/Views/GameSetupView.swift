@@ -2,7 +2,7 @@ import SwiftUI
 import shared
 
 struct GameSetupView: View {
-    @ObservedObject var gameManager: GameManagerBridge
+    @EnvironmentObject var viewModel: AppViewModel
     let game: MultiUserGame
     @Binding var recordings: [RecordingDetails]
     @Binding var currentWordIndex: Int
@@ -23,17 +23,19 @@ struct GameSetupView: View {
                 }
                 .padding(.horizontal)
                 
-                Text("Created by \(gameManager.getCreatorName(for: game) ?? "")")
+                Text("Created by \(viewModel.getCreatorName(for: game) ?? "")")
                     .foregroundColor(.secondary)
                 
                 // Participants
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Participants \(game.participants.count))")
+                    Text("Participants \(game.participantIds.count))")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    ForEach(Array(game.participants), id: \.self) { participant in
-                       ParticipantRow(participant: participant, game: game)
+                    ForEach(Array(game.participantIds), id: \.self) { participantId in
+                        if let participant = viewModel.getUser(by: participantId) {
+                            ParticipantRow(participant: participant, game: game)
+                        }
                     }
                 }
                 .padding()
@@ -65,7 +67,7 @@ struct GameSetupView: View {
                             recordings[currentWordIndex].url = nil // Clear existing recording
                         }
                     )
-                    .environmentObject(gameManager)
+                    .environmentObject(viewModel)
                     
                     // Recorded Words List
                     VStack(alignment: .leading, spacing: 8) {
@@ -100,8 +102,8 @@ struct GameSetupView: View {
                     }
                 }
                 
-                if game.creator == gameManager.currentUser && !game.isStarted {
-                    Button(action: { gameManager.startGame(gameID: game.id) }) {
+                if game.creatorId == viewModel.currentUser?.id && !game.isStarted {
+                    Button(action: { viewModel.startGame(gameId: game.id) }) {
                         Text("Start Game")
                             .font(.headline)
                             .foregroundColor(.white)
