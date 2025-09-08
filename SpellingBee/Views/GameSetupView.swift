@@ -1,7 +1,8 @@
 import SwiftUI
+import shared
 
 struct GameSetupView: View {
-    @ObservedObject var gameManager: GameManager
+    @EnvironmentObject var gameManager: AppViewModel
     let game: MultiUserGame
     @Binding var recordings: [RecordingDetails]
     @Binding var currentWordIndex: Int
@@ -27,12 +28,14 @@ struct GameSetupView: View {
                 
                 // Participants
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Participants \(game.participants.count))")
+                    Text("Participants (\(game.participantIds.count))")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    ForEach(Array(game.participants), id: \.self) { participant in
-                       ParticipantRow(participant: participant, game: game)
+                    ForEach(Array(game.participantIds), id: \.self) { participantID in
+                        if let participant = gameManager.getUser(by: participantID) {
+                            ParticipantRow(participant: participant, game: game)
+                        }
                     }
                 }
                 .padding()
@@ -99,8 +102,8 @@ struct GameSetupView: View {
                     }
                 }
                 
-                if game.creator == gameManager.currentUser && !game.isStarted {
-                    Button(action: { gameManager.startGame(gameID: game.id) }) {
+                if game.creatorId == gameManager.currentUser?.id && !game.isStarted {
+                    Button(action: { gameManager.startGame(gameId: game.id) }) {
                         Text("Start Game")
                             .font(.headline)
                             .foregroundColor(.white)
@@ -154,5 +157,94 @@ struct RecordedWordRow: View {
             .padding(.vertical, 5)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Recording Controls
+struct RecordingControls: View {
+    @EnvironmentObject var viewModel: AppViewModel
+    @Binding var isRecording: Bool
+    @Binding var recording: RecordingDetails
+    let canRecord: Bool
+    let voiceVm: VoiceViewModel
+    let game: MultiUserGame
+    let onNext: () -> Void
+    let onRerecord: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 15) {
+            if isRecording {
+                Button(action: stopRecording) {
+                    Image(systemName: "stop.fill")
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                }
+            } else {
+                Button(action: startRecording) {
+                    Image(systemName: "mic.fill")
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(canRecord ? Color.green : Color.gray)
+                        .clipShape(Circle())
+                }
+                .disabled(!canRecord)
+                
+                if recording.url != nil {
+                    Button(action: playRecording) {
+                        Image(systemName: "play.fill")
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: onRerecord) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: onNext) {
+                        Image(systemName: "arrow.right")
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.gray)
+                            .clipShape(Circle())
+                    }
+                }
+            }
+        }
+    }
+    
+    private func startRecording() {
+        guard !recording.word.isEmpty else { return }
+        voiceVm.startRecording(for: recording.word) { url in
+            recording.url = url
+            withAnimation { isRecording = true }
+        }
+    }
+    
+    private func stopRecording() {
+        voiceVm.stopRecording()
+        withAnimation { isRecording = false }
+    }
+    
+    private func playRecording() {
+        if let url = recording.url {
+            if recording.isLocal {
+                voiceVm.startPlaying(url: url) {}
+            } else {
+                // Download from Firebase if not local
+                viewModel.downloadAudio(gameId: game.id, word: recording.word) { downloadedUrl in
+                    if let downloadedUrl = downloadedUrl {
+                        voiceVm.startPlaying(url: downloadedUrl) {}
+                    }
+                }
+            }
+        }
     }
 }

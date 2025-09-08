@@ -1,22 +1,23 @@
 import SwiftUI
-
+import shared
 
 struct LoginRegisterView: View {
-    @EnvironmentObject var userManager: UserManager
-    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     @State private var isRegistering = false
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
+    @State private var isLoading = false
     
     var body: some View {
         VStack(spacing: 30) {
-            // Game Logo
-            Image("SpellingBee") // Replace with your actual logo asset
+            // Logo placeholder
+            Image(systemName: "book.circle.fill")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 200,height: 200)
+                .frame(width: 100, height: 100)
+                .foregroundColor(.blue)
                 .padding(.top, 20)
             
             Text(isRegistering ? "Create Account" : "Welcome Back")
@@ -37,96 +38,44 @@ struct LoginRegisterView: View {
                 SecureField("Password", text: $password)
                     .textFieldStyle(ModernTextFieldStyle())
                 
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
+                if let error = viewModel.authError ?? errorMessage {
+                    Text(error)
                         .foregroundColor(.red)
                         .font(.caption)
                 }
             }
             
             Button(action: handleAuth) {
-                Text(isRegistering ? "Sign Up" : "Log In")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
+                if viewModel.isAuthLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text(isRegistering ? "Sign Up" : "Log In")
+                        .font(.headline)
+                }
             }
-            
-            // Social Login Buttons
-            VStack(spacing: 15) {
-                SocialLoginButton(icon: "facebook", text: "Continue with Facebook", color: Color.blue)
-                SocialLoginButton(icon: "google", text: "Continue with Google", color: Color.red)
-            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Color.blue)
+            .cornerRadius(12)
+            .disabled(viewModel.isAuthLoading)
             
             Button(action: { isRegistering.toggle() }) {
                 Text(isRegistering ? "Already have an account? Log In" : "Need an account? Sign Up")
                     .foregroundColor(.blue)
-                    .font(.subheadline)
             }
             
             Spacer()
         }
         .padding()
-        .background(Color(.systemBackground))
     }
     
     private func handleAuth() {
+        viewModel.clearErrors()
         if isRegistering {
-            userManager.register(username: username, email: email, password: password) { result in
-                handleAuthResult(result)
-            }
+            viewModel.register(username: username, email: email, password: password)
         } else {
-            userManager.login(email: email, password: password) { result in
-                handleAuthResult(result)
-            }
-        }
-    }
-    
-    private func handleAuthResult(_ result: Result<SpellGameUser, Error>) {
-        switch result {
-        case .success(let user):
-            gameManager.setCurrentUser(user)
-        case .failure(let error):
-            errorMessage = error.localizedDescription
-        }
-    }
-}
-
-// Custom TextField Style
-struct ModernTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
-            .foregroundColor(.primary)
-    }
-}
-
-// Social Login Button Component
-struct SocialLoginButton: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        Button(action: {
-            // Implement social login later
-        }) {
-            HStack {
-                Image(icon) // Add these assets to your project
-                    .resizable()
-                    .frame(width: 24, height: 24)
-                Text(text)
-                    .font(.headline)
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(color.opacity(0.9))
-            .cornerRadius(12)
+            viewModel.login(email: email, password: password)
         }
     }
 }

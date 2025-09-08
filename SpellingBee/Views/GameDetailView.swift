@@ -1,6 +1,5 @@
-// GameDetailsView.swift
 import SwiftUI
-import UIKit
+import shared
 
 struct RecordingDetails {
     var word: String
@@ -9,7 +8,7 @@ struct RecordingDetails {
 }
 
 struct GameDetailsView: View {
-    @ObservedObject var gameManager: GameManager
+    @EnvironmentObject var viewModel: AppViewModel
     let game: MultiUserGame
     @State private var recordings: [RecordingDetails] = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
     @State private var currentWordIndex = 0
@@ -20,15 +19,15 @@ struct GameDetailsView: View {
     var body: some View {
         if game.isStarted {
             GamePlayView(game: game)
-                .environmentObject(gameManager)
+                .environmentObject(viewModel)
         } else {
             GameSetupView(
-                gameManager: gameManager,
                 game: game,
                 recordings: $recordings,
                 currentWordIndex: $currentWordIndex,
                 isRecording: $isRecording
             )
+            .environmentObject(viewModel)
             .onAppear(perform: loadExistingWords)
         }
     }
@@ -38,50 +37,52 @@ struct GameDetailsView: View {
     }
     
     private var canSubmit: Bool {
-        !game.isStarted
+        !game.isStarted && recordedCount > 0
     }
     
     private func submitWords() {
         let dispatchGroup = DispatchGroup()
         var words: [Word] = []
         
-        for recording in recordings {
-            if let url = recording.url, recording.isLocal {
+        for recording in recordings where recording.url != nil && recording.isLocal {
+            if let url = recording.url, let audioData = try? Data(contentsOf: url) {
                 dispatchGroup.enter()
-                gameManager.uploadAudio(gameID: game.id, url: url, word: recording.word) { uploadedUrl in
-                    if let uploadedUrl = uploadedUrl, let currentUser = self.gameManager.currentUser {
-                        let newWord = Word(
-                            word: recording.word,
-                            soundURL: URL(string: uploadedUrl),
-                            level: 1,
-                            createdBy: currentUser,
-                            game: self.game
-                        )
-                        words.append(newWord)
-                    }
+                viewModel.uploadAudio(gameId: game.id, word: recording.word, audioData: audioData)
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: DispatchWorkItem {
+                    // Create Word with the URL from storage
+                    let newWord = Word(
+                        id: UUID().uuidString,
+                        word: recording.word,
+                        soundUrl: "https://storage.googleapis.com/recordings/\(game.id)\(recording.word).m4a",
+                        level: 1,
+                        createdByID: viewModel.currentUser?.id ?? "",
+                        gameID: game.id
+                    )
+                    words.append(newWord)
                     dispatchGroup.leave()
-                }
+                })
             }
         }
         
         dispatchGroup.notify(queue: .main) {
-            self.gameManager.addWords(to: self.game.id, words: words)
-            self.presentationMode.wrappedValue.dismiss()
+            viewModel.addWords(to: game.id, words: words)
+            presentationMode.wrappedValue.dismiss()
         }
     }
     
     private func loadExistingWords() {
-        guard let currentUser = gameManager.currentUser else { return }
+        guard let currentUser = viewModel.currentUser else { return }
         
         // Reset recordings
         recordings = Array(repeating: .init(word: "", url: nil, isLocal: true), count: 5)
         
         // Load words from game
-        let userWords = game.words.filter { $0.createdBy == currentUser }
+        let userWords = game.words.filter { $0.createdByID == currentUser.id }
         for (index, word) in userWords.enumerated() where index < 5 {
             recordings[index] = RecordingDetails(
                 word: word.word,
-                url: word.soundURL,
+                url: word.soundUrl != nil ? URL(string: word.soundUrl!) : nil,
                 isLocal: false
             )
         }
@@ -89,93 +90,6 @@ struct GameDetailsView: View {
         // Set current index to first empty slot or last if all filled
         currentWordIndex = min(userWords.count, 4)
     }
-}
-
-// Recording Controls
-struct RecordingControls: View {
-    @EnvironmentObject var gameManager: GameManager
-    @Binding var isRecording: Bool
-    @Binding var recording: RecordingDetails
-    let canRecord: Bool
-    let voiceVm: VoiceViewModel
-    let game: MultiUserGame
-    let onNext: () -> Void
-    let onRerecord: () -> Void
     
-    var body: some View {
-        HStack(spacing: 15) {
-            if isRecording {
-                Button(action: stopRecording) {
-                    Image(systemName: "stop.fill")
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Color.red)
-                        .clipShape(Circle())
-                }
-            } else {
-                Button(action: startRecording) {
-                    Image(systemName: "mic.fill")
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(canRecord ? Color.green : Color.gray)
-                        .clipShape(Circle())
-                }
-                .disabled(!canRecord)
-                
-                if recording.url != nil {
-                    Button(action: playRecording) {
-                        Image(systemName: "play.fill")
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                    }
-                    
-                    Button(action: onRerecord) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Color.orange)
-                            .clipShape(Circle())
-                    }
-                    
-                    Button(action: onNext) {
-                        Image(systemName: "arrow.right")
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Color.gray)
-                            .clipShape(Circle())
-                    }
-                }
-            }
-        }
-    }
     
-    private func startRecording() {
-        guard !recording.word.isEmpty else { return }
-        voiceVm.startRecording(for: recording.word) { url in
-            recording.url = url
-            withAnimation { isRecording = true }
-        }
-    }
-    
-    private func stopRecording() {
-        voiceVm.stopRecording()
-        withAnimation { isRecording = false }
-    }
-    
-    private func playRecording() {
-        if let url = recording.url {
-            if recording.isLocal {
-                voiceVm.startPlaying(url: url) {}
-            } else {
-                // Download from Firebase if not local
-                gameManager.downloadAudio(gameID: game.id, word: recording.word) { downloadedUrl in
-                    if let downloadedUrl = downloadedUrl {
-                        voiceVm.startPlaying(url: downloadedUrl) {}
-                    }
-                }
-            }
-        }
-    }
 }

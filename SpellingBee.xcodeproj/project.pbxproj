@@ -11,23 +11,23 @@
 		EB16AE9A2C5DB5E50017F738 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB16AE992C5DB5E50017F738 /* ContentView.swift */; };
 		EB16AE9C2C5DB5E90017F738 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EB16AE9B2C5DB5E90017F738 /* Assets.xcassets */; };
 		EB16AEA02C5DB5E90017F738 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EB16AE9F2C5DB5E90017F738 /* Preview Assets.xcassets */; };
-		EB225D252DAB472600BE66B9 /* GameManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB225D242DAB472600BE66B9 /* GameManager.swift */; };
 		EB225D292DAC82AD00BE66B9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB225D282DAC82AD00BE66B9 /* GoogleService-Info.plist */; };
 		EB225D2B2DAC834500BE66B9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = EB225D2A2DAC834500BE66B9 /* FirebaseFirestore */; };
 		EB225D2D2DAC962900BE66B9 /* GameDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB225D2C2DAC962900BE66B9 /* GameDetailView.swift */; };
 		EB225D2F2DAC966100BE66B9 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = EB225D2E2DAC966100BE66B9 /* FirebaseStorage */; };
 		EB225D312DAC9CED00BE66B9 /* VoiceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB225D302DAC9CED00BE66B9 /* VoiceViewModel.swift */; };
+		EB2E55DA2DD61EAE00B8DCA5 /* CommViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2E55D92DD61EA900B8DCA5 /* CommViews.swift */; };
+		EB3A8D9F2DED3E3A007D469B /* UserGameProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3A8D9E2DED3E34007D469B /* UserGameProgress.swift */; };
 		EB5C41232DCAE36C00D1CE9D /* GameSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5C41222DCAE36400D1CE9D /* GameSetupView.swift */; };
-		EB5C41252DCAE4BE00D1CE9D /* MultiUserGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5C41242DCAE4B800D1CE9D /* MultiUserGame.swift */; };
-		EB5C41272DCAE4E500D1CE9D /* Word.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5C41262DCAE4E300D1CE9D /* Word.swift */; };
 		EB5C41292DCAE52400D1CE9D /* CreateGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5C41282DCAE52000D1CE9D /* CreateGameView.swift */; };
 		EB5C412B2DCAE59F00D1CE9D /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5C412A2DCAE59C00D1CE9D /* GamePlayView.swift */; };
 		EB70CDA42DAB429800C2F52E /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = EB70CDA32DAB429800C2F52E /* FirebaseCore */; };
 		EB70CDA62DAB431400C2F52E /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB70CDA52DAB431400C2F52E /* UserManager.swift */; };
-		EB70CDA82DAB435E00C2F52E /* SpellGameUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB70CDA72DAB435E00C2F52E /* SpellGameUser.swift */; };
 		EB70CDAB2DAB43A200C2F52E /* LoginRegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB70CDAA2DAB43A200C2F52E /* LoginRegisterView.swift */; };
 		EB70CDAD2DAB440D00C2F52E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = EB70CDAC2DAB440D00C2F52E /* FirebaseAuth */; };
 		EBA5DA072DBD9E150028AA20 /* search.png in Resources */ = {isa = PBXBuildFile; fileRef = EBA5DA062DBD9E150028AA20 /* search.png */; };
+		EBF2F1BC2E6DC42F00169415 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF2F1BB2E6DC42F00169415 /* AppViewModel.swift */; };
+		EBF2F1C42E6DFE5400169415 /* shared.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBF2F1C32E6DFE5400169415 /* shared.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,19 +37,19 @@
 		EB16AE9B2C5DB5E90017F738 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EB16AE9D2C5DB5E90017F738 /* SpellingBee.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SpellingBee.entitlements; sourceTree = "<group>"; };
 		EB16AE9F2C5DB5E90017F738 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		EB225D242DAB472600BE66B9 /* GameManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameManager.swift; sourceTree = "<group>"; };
 		EB225D282DAC82AD00BE66B9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EB225D2C2DAC962900BE66B9 /* GameDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailView.swift; sourceTree = "<group>"; };
 		EB225D302DAC9CED00BE66B9 /* VoiceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceViewModel.swift; sourceTree = "<group>"; };
+		EB2E55D92DD61EA900B8DCA5 /* CommViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommViews.swift; sourceTree = "<group>"; };
+		EB3A8D9E2DED3E34007D469B /* UserGameProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGameProgress.swift; sourceTree = "<group>"; };
 		EB5C41222DCAE36400D1CE9D /* GameSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSetupView.swift; sourceTree = "<group>"; };
-		EB5C41242DCAE4B800D1CE9D /* MultiUserGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiUserGame.swift; sourceTree = "<group>"; };
-		EB5C41262DCAE4E300D1CE9D /* Word.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Word.swift; sourceTree = "<group>"; };
 		EB5C41282DCAE52000D1CE9D /* CreateGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGameView.swift; sourceTree = "<group>"; };
 		EB5C412A2DCAE59C00D1CE9D /* GamePlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayView.swift; sourceTree = "<group>"; };
 		EB70CDA52DAB431400C2F52E /* UserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
-		EB70CDA72DAB435E00C2F52E /* SpellGameUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpellGameUser.swift; sourceTree = "<group>"; };
 		EB70CDAA2DAB43A200C2F52E /* LoginRegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginRegisterView.swift; sourceTree = "<group>"; };
 		EBA5DA062DBD9E150028AA20 /* search.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = search.png; sourceTree = "<group>"; };
+		EBF2F1BB2E6DC42F00169415 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		EBF2F1C32E6DFE5400169415 /* shared.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = shared.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EB70CDA42DAB429800C2F52E /* FirebaseCore in Frameworks */,
+				EBF2F1C42E6DFE5400169415 /* shared.xcframework in Frameworks */,
 				EB225D2F2DAC966100BE66B9 /* FirebaseStorage in Frameworks */,
 				EB70CDAD2DAB440D00C2F52E /* FirebaseAuth in Frameworks */,
 				EB225D2B2DAC834500BE66B9 /* FirebaseFirestore in Frameworks */,
@@ -70,6 +71,7 @@
 		EB16AE8B2C5DB5E50017F738 = {
 			isa = PBXGroup;
 			children = (
+				EBF2F1C32E6DFE5400169415 /* shared.xcframework */,
 				EB16AE962C5DB5E50017F738 /* SpellingBee */,
 				EB70CDA22DAB429800C2F52E /* Frameworks */,
 				EB16AE952C5DB5E50017F738 /* Products */,
@@ -88,8 +90,9 @@
 		EB16AE962C5DB5E50017F738 /* SpellingBee */ = {
 			isa = PBXGroup;
 			children = (
+				EBF2F1BB2E6DC42F00169415 /* AppViewModel.swift */,
+				EB3A8D9E2DED3E34007D469B /* UserGameProgress.swift */,
 				EB70CDA92DAB438300C2F52E /* Views */,
-				EB16AEA62C5DB5FC0017F738 /* Model */,
 				EB16AE972C5DB5E50017F738 /* SpellingBeeApp.swift */,
 				EB16AE992C5DB5E50017F738 /* ContentView.swift */,
 				EB16AE9B2C5DB5E90017F738 /* Assets.xcassets */,
@@ -97,7 +100,6 @@
 				EB16AE9D2C5DB5E90017F738 /* SpellingBee.entitlements */,
 				EB16AE9E2C5DB5E90017F738 /* Preview Content */,
 				EB70CDA52DAB431400C2F52E /* UserManager.swift */,
-				EB225D242DAB472600BE66B9 /* GameManager.swift */,
 				EB225D302DAC9CED00BE66B9 /* VoiceViewModel.swift */,
 			);
 			path = SpellingBee;
@@ -111,16 +113,6 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		EB16AEA62C5DB5FC0017F738 /* Model */ = {
-			isa = PBXGroup;
-			children = (
-				EB5C41262DCAE4E300D1CE9D /* Word.swift */,
-				EB5C41242DCAE4B800D1CE9D /* MultiUserGame.swift */,
-				EB70CDA72DAB435E00C2F52E /* SpellGameUser.swift */,
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
 		EB70CDA22DAB429800C2F52E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -131,6 +123,7 @@
 		EB70CDA92DAB438300C2F52E /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				EB2E55D92DD61EA900B8DCA5 /* CommViews.swift */,
 				EB5C412A2DCAE59C00D1CE9D /* GamePlayView.swift */,
 				EB5C41282DCAE52000D1CE9D /* CreateGameView.swift */,
 				EB5C41222DCAE36400D1CE9D /* GameSetupView.swift */,
@@ -147,6 +140,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = EB16AEA32C5DB5E90017F738 /* Build configuration list for PBXNativeTarget "SpellingBee" */;
 			buildPhases = (
+				EBF2F1C22E6DFE1100169415 /* Build KMP module */,
 				EB16AE902C5DB5E50017F738 /* Sources */,
 				EB16AE912C5DB5E50017F738 /* Frameworks */,
 				EB16AE922C5DB5E50017F738 /* Resources */,
@@ -210,6 +204,27 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		EBF2F1C22E6DFE1100169415 /* Build KMP module */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build KMP module";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n# Type a script or drag a script file from your workspace to insert its path.\n# Build Kotlin Multiplatform Framework\nset -e\n\necho \"🔨 Building Kotlin Multiplatform shared module...\"\n\n# Navigate to the project root\ncd \"$SRCROOT\"\n\n# Use full path to gradlew\nGRADLEW_PATH=\"$SRCROOT/gradlew\"\n\n# Check if gradlew exists\nif [ ! -f \"$GRADLEW_PATH\" ]; then\n    echo \"❌ Error: gradlew not found at $GRADLEW_PATH\"\n    exit 1\nfi\n\n# Build the XCFramework using full path\necho \"📦 Building XCFramework...\"\n\"$GRADLEW_PATH\" :shared:podPublishXCFramework\n\necho \"✅ KMP build completed successfully!\"\necho \"📁 XCFramework location: $SRCROOT/shared/build/cocoapods/publish/debug/shared.xcframework\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		EB16AE902C5DB5E50017F738 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -217,17 +232,16 @@
 			files = (
 				EB5C41292DCAE52400D1CE9D /* CreateGameView.swift in Sources */,
 				EB5C412B2DCAE59F00D1CE9D /* GamePlayView.swift in Sources */,
+				EBF2F1BC2E6DC42F00169415 /* AppViewModel.swift in Sources */,
+				EB2E55DA2DD61EAE00B8DCA5 /* CommViews.swift in Sources */,
 				EB16AE9A2C5DB5E50017F738 /* ContentView.swift in Sources */,
 				EB225D312DAC9CED00BE66B9 /* VoiceViewModel.swift in Sources */,
 				EB225D2D2DAC962900BE66B9 /* GameDetailView.swift in Sources */,
 				EB70CDAB2DAB43A200C2F52E /* LoginRegisterView.swift in Sources */,
 				EB5C41232DCAE36C00D1CE9D /* GameSetupView.swift in Sources */,
 				EB16AE982C5DB5E50017F738 /* SpellingBeeApp.swift in Sources */,
-				EB5C41272DCAE4E500D1CE9D /* Word.swift in Sources */,
-				EB225D252DAB472600BE66B9 /* GameManager.swift in Sources */,
 				EB70CDA62DAB431400C2F52E /* UserManager.swift in Sources */,
-				EB5C41252DCAE4BE00D1CE9D /* MultiUserGame.swift in Sources */,
-				EB70CDA82DAB435E00C2F52E /* SpellGameUser.swift in Sources */,
+				EB3A8D9F2DED3E3A007D469B /* UserGameProgress.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,6 +374,7 @@
 				DEVELOPMENT_TEAM = RVVZN534DY;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -398,6 +413,7 @@
 				DEVELOPMENT_TEAM = RVVZN534DY;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
